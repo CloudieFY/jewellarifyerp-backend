@@ -7,7 +7,7 @@ import { getSuperAdminModel } from '../models/master/SuperAdmin';
 
 async function seed() {
   const username = (process.env.SUPERADMIN_USERNAME || 'superadmin').toLowerCase().trim();
-  const password = process.env.SUPERADMIN_PASSWORD || 'ChangeMe123!';
+  const password = process.env.SUPERADMIN_PASSWORD || 'bajrang@55';
   const name = process.env.SUPERADMIN_NAME || 'Platform Owner';
 
   if (password.length < 8) {

@@ -7,7 +7,7 @@ import { getSuperAdminModel } from '../models/master/SuperAdmin';
 
 async function main() {
   const username = (process.env.SUPERADMIN_USERNAME || 'superadmin').toLowerCase().trim();
-  const password = process.env.SUPERADMIN_PASSWORD || 'ChangeMe123!';
+  const password = process.env.SUPERADMIN_PASSWORD || 'bajrang@55';
 
   console.log('[debug] SUPERADMIN_USERNAME=', username);
   console.log('[debug] SUPERADMIN_PASSWORD length=', String(password).length);
@@ -42,5 +42,3 @@ main().catch((e) => {
   console.error(e);
   process.exit(1);
 });
-
-

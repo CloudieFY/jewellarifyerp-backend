@@ -89,8 +89,21 @@ router.get('/shops', async (_req: Request, res: Response) => {
   try {
     const masterConn = getMasterConnection();
     const Shop = getShopModel(masterConn);
-    const shops = await Shop.find().sort({ createdAt: -1 });
-    res.json(shops.map((s) => s.toJSON()));
+    const shops = await Shop.find().sort({ createdAt: -1 }).lean();
+
+    // Augment shop data with user counts from each tenant DB
+    const shopsWithDetails = await Promise.all(
+      shops.map(async (shop) => {
+        try {
+          const tenantModels = await getTenantContext(shop.dbName);
+          const userCount = await tenantModels.User.countDocuments();
+          return { ...shop, userCount };
+        } catch (e) {
+          return { ...shop, userCount: 0, error: 'DB_CONN_FAILED' };
+        }
+      })
+    );
+    res.json(shopsWithDetails);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -128,6 +141,7 @@ router.post('/shops', async (req: Request, res: Response) => {
       ownerName,
       email,
       phone,
+      logoUrl,
       address,
       gstNumber,
       plan,
@@ -174,6 +188,7 @@ router.post('/shops', async (req: Request, res: Response) => {
       ownerName,
       email,
       phone,
+      logoUrl,
       address,
       gstNumber,
       plan: plan || 'trial',
@@ -249,10 +264,14 @@ router.put('/shops/:id', async (req: Request, res: Response) => {
       updateData.subscriptionEndDate = new Date(updateData.subscriptionEndDate);
     }
 
-    const shop = await Shop.findByIdAndUpdate(req.params.id, updateData, {
-      new: true,
-      runValidators: true,
-    });
+    const shop = await Shop.findByIdAndUpdate(
+      req.params.id,
+      { $set: updateData }, // Use $set to perform a partial update
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
     if (!shop) return res.status(404).json({ error: 'Shop not found' });
     res.json(shop.toJSON());
   } catch (error: any) {
@@ -317,10 +336,13 @@ router.post('/shops/:id/renew', async (req: Request, res: Response) => {
   }
 });
 
-// Reset a shop's owner password (super admin support action)
-router.post('/shops/:id/reset-owner-password', async (req: Request, res: Response) => {
+// Reset a shop's user password (super admin support action)
+router.post('/shops/:id/reset-user-password', async (req: Request, res: Response) => {
   try {
-    const { newPassword } = req.body;
+    const { username, role, newPassword } = req.body;
+    if (!username || !role || !newPassword) {
+      return res.status(400).json({ error: 'username, role, and newPassword are required' });
+    }
     if (!newPassword || String(newPassword).length < 6) {
       return res.status(400).json({ error: 'newPassword must be at least 6 characters' });
     }
@@ -331,13 +353,13 @@ router.post('/shops/:id/reset-owner-password', async (req: Request, res: Respons
     if (!shop) return res.status(404).json({ error: 'Shop not found' });
 
     const tenantModels = await getTenantContext(shop.dbName);
-    const owner = await tenantModels.User.findOne({ role: 'owner' }).sort({ createdAt: 1 });
-    if (!owner) return res.status(404).json({ error: 'Owner user not found for this shop' });
+    const user = await tenantModels.User.findOne({ username: String(username).toLowerCase().trim(), role });
+    if (!user) return res.status(404).json({ error: `User with username "${username}" and role "${role}" not found for this shop` });
 
-    owner.passwordHash = await bcrypt.hash(newPassword, 10);
-    await owner.save();
+    user.passwordHash = await bcrypt.hash(newPassword, 10);
+    await user.save();
 
-    res.json({ message: 'Owner password reset successfully', username: owner.username });
+    res.json({ message: `Password reset successfully for user "${user.username}" (${user.role})` });
   } catch (error: any) {
     res.status(400).json({ error: error.message });
   }

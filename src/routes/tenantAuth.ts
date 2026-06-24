@@ -59,13 +59,7 @@ router.post('/login', async (req: Request, res: Response) => {
     res.json({
       token,
       user: user.toJSON(),
-      shop: {
-        id: shop._id.toString(),
-        slug: shop.slug,
-        shopName: shop.shopName,
-        plan: shop.plan,
-        subscriptionEndDate: shop.subscriptionEndDate,
-      },
+      shop: shop.toJSON(), // Send the full shop object
     });
   } catch (error: any) {
     console.error('[Tenant login] error:', error.message);
@@ -85,7 +79,7 @@ router.get('/me', requireTenantAuth(), async (req: Request, res: Response) => {
 
     res.json({
       user: user.toJSON(),
-      shop: shop ? shop.toJSON() : null,
+      shop: shop?.toJSON() ?? null,
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -93,7 +87,7 @@ router.get('/me', requireTenantAuth(), async (req: Request, res: Response) => {
 });
 
 // Update own shop details (owner only)
-router.put('/shop', requireTenantAuth(['owner']), async (req: Request, res: Response) => {
+router.put('/shop', requireTenantAuth(['owner', 'operator']), async (req: Request, res: Response) => {
   try {
     const masterConn = getMasterConnection();
     const Shop = getShopModel(masterConn);
@@ -109,8 +103,12 @@ router.put('/shop', requireTenantAuth(['owner']), async (req: Request, res: Resp
     delete updateData.subscriptionStartDate;
     delete updateData.subscriptionEndDate;
 
-    const shop = await Shop.findByIdAndUpdate(req.tenant!.shopId, updateData, { new: true });
-    res.json(shop?.toJSON());
+    const shop = await Shop.findByIdAndUpdate(
+      req.tenant!.shopId,
+      { $set: updateData }, // Use $set to perform a partial update
+      { new: true, runValidators: true }
+    );
+    res.json({ shop: shop?.toJSON() });
   } catch (error: any) {
     res.status(400).json({ error: error.message });
   }
