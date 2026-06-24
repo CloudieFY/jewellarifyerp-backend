@@ -35,13 +35,13 @@ router.post('/login', async (req: Request, res: Response) => {
 
     if (!admin) {
       console.log('[SuperAdmin login] no superadmin found for username:', { normalizedUsername });
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ error: 'User not found' });
     }
 
     const ok = await bcrypt.compare(password, admin.passwordHash);
     if (!ok) {
       console.log('[SuperAdmin login] password mismatch for username:', { normalizedUsername });
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ error: 'User not found' });
     }
 
 
@@ -359,7 +359,10 @@ router.post('/shops/:id/reset-user-password', async (req: Request, res: Response
     user.passwordHash = await bcrypt.hash(newPassword, 10);
     await user.save();
 
-    res.json({ message: `Password reset successfully for user "${user.username}" (${user.role})` });
+    res.json({
+      message: `Password reset successfully for user "${user.username}" (${user.role})`,
+      newPassword: newPassword, // Return the new password
+    });
   } catch (error: any) {
     res.status(400).json({ error: error.message });
   }

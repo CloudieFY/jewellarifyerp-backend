@@ -30,7 +30,7 @@ router.post('/login', async (req: Request, res: Response) => {
     const masterConn = getMasterConnection();
     const Shop = getShopModel(masterConn);
     const shop = await Shop.findOne({ slug: String(shopSlug).toLowerCase().trim() });
-    if (!shop) return res.status(401).json({ error: 'Invalid shop ID, username or password' });
+    if (!shop) return res.status(401).json({ error: 'User not found' });
 
     if (shop.status === 'suspended') {
       return res.status(403).json({ error: 'This shop account has been suspended. Contact support.' });
@@ -42,11 +42,11 @@ router.post('/login', async (req: Request, res: Response) => {
     const tenantModels = await getTenantContext(shop.dbName);
     const user = await tenantModels.User.findOne({ username: String(username).toLowerCase().trim() });
     if (!user || !user.isActive) {
-      return res.status(401).json({ error: 'Invalid shop ID, username or password' });
+      return res.status(401).json({ error: 'User not found' });
     }
 
     const ok = await bcrypt.compare(password, user.passwordHash);
-    if (!ok) return res.status(401).json({ error: 'Invalid shop ID, username or password' });
+    if (!ok) return res.status(401).json({ error: 'User not found' });
 
     const token = signTenantToken({
       sub: user.id,
