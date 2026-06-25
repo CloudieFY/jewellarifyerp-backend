@@ -31,7 +31,7 @@ router.post('/login', async (req: Request, res: Response) => {
     const Shop = getShopModel(masterConn);
     const shop = await Shop.findOne({ slug: String(shopSlug).toLowerCase().trim() });
     if (!shop) return res.status(401).json({ error: 'User not found' });
-
+    
     if (shop.status === 'suspended') {
       return res.status(403).json({ error: 'This shop account has been suspended. Contact support.' });
     }
@@ -103,12 +103,18 @@ router.put('/shop', requireTenantAuth(['owner', 'operator']), async (req: Reques
     delete updateData.subscriptionStartDate;
     delete updateData.subscriptionEndDate;
 
+    const user = await req.tenant!.models.User.findById(req.tenantAuth!.sub);
+    if (!user) return res.status(404).json({ error: 'User not found while updating shop' });
+
     const shop = await Shop.findByIdAndUpdate(
       req.tenant!.shopId,
       { $set: updateData }, // Use $set to perform a partial update
       { new: true, runValidators: true }
     );
-    res.json({ shop: shop?.toJSON() });
+    res.json({
+      user: user.toJSON(),
+      shop: shop?.toJSON() ?? null,
+    });
   } catch (error: any) {
     res.status(400).json({ error: error.message });
   }

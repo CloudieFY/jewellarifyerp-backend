@@ -97,12 +97,17 @@ router.get('/shops', async (_req: Request, res: Response) => {
         try {
           const tenantModels = await getTenantContext(shop.dbName);
           const userCount = await tenantModels.User.countDocuments();
-          return { ...shop, userCount };
+          // Manually apply the toJSON transform that .lean() skips
+          const shopWithId = { ...shop, id: shop._id.toString() };
+          return { ...shopWithId, userCount };
         } catch (e) {
-          return { ...shop, userCount: 0, error: 'DB_CONN_FAILED' };
+          // Also apply the transform on error cases
+          const shopWithId = { ...shop, id: shop._id.toString() };
+          return { ...shopWithId, userCount: 0, error: 'DB_CONN_FAILED' };
         }
       })
     );
+
     res.json(shopsWithDetails);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -258,7 +263,7 @@ router.put('/shops/:id', async (req: Request, res: Response) => {
 
     const updateData = { ...req.body };
     delete updateData.dbName; // never allow changing the physical db binding
-    delete updateData.slug; // slug changes are handled via a dedicated endpoint if ever needed
+    delete updateData.slug; // slug changes are handled via a dedicated endpoint
 
     if (updateData.subscriptionEndDate) {
       updateData.subscriptionEndDate = new Date(updateData.subscriptionEndDate);
@@ -278,6 +283,41 @@ router.put('/shops/:id', async (req: Request, res: Response) => {
     res.status(400).json({ error: error.message });
   }
 });
+
+// Update shop slug (shop id) without migrating tenant DB.
+// Only changes how the shop logs in (slug in master DB). Tenant DB stays the same.
+router.post('/shops/:id/update-slug', async (req: Request, res: Response) => {
+  try {
+    const { slug } = req.body;
+    if (!slug) return res.status(400).json({ error: 'slug is required' });
+
+    const normalizedSlug = String(slug).toLowerCase().trim().replace(/\s+/g, '-');
+    if (!normalizedSlug) return res.status(400).json({ error: 'Invalid slug' });
+
+    const masterConn = getMasterConnection();
+    const Shop = getShopModel(masterConn);
+
+    const shop = await Shop.findById(req.params.id);
+    if (!shop) return res.status(404).json({ error: 'Shop not found' });
+
+    if (shop.slug === normalizedSlug) {
+      return res.json(shop.toJSON());
+    }
+
+    const existing = await Shop.findOne({ slug: normalizedSlug });
+    if (existing) {
+      return res.status(409).json({ error: `Shop id "${normalizedSlug}" is already taken` });
+    }
+
+    shop.slug = normalizedSlug;
+    await shop.save();
+
+    res.json(shop.toJSON());
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
 
 // Suspend a shop (blocks login immediately, data stays intact)
 router.post('/shops/:id/suspend', async (req: Request, res: Response) => {
@@ -353,15 +393,23 @@ router.post('/shops/:id/reset-user-password', async (req: Request, res: Response
     if (!shop) return res.status(404).json({ error: 'Shop not found' });
 
     const tenantModels = await getTenantContext(shop.dbName);
-    const user = await tenantModels.User.findOne({ username: String(username).toLowerCase().trim(), role });
-    if (!user) return res.status(404).json({ error: `User with username "${username}" and role "${role}" not found for this shop` });
+    const normalizedUsername = String(username).toLowerCase().trim();
+    const normalizedRole = String(role).toLowerCase().trim();
+
+    const user = await tenantModels.User.findOne({ username: normalizedUsername, role: normalizedRole });
+    if (!user) {
+      return res.status(404).json({
+        error: `User not found in this shop. username="${normalizedUsername}", role="${normalizedRole}", shopDb="${shop.dbName}"`,
+      });
+    }
 
     user.passwordHash = await bcrypt.hash(newPassword, 10);
     await user.save();
 
     res.json({
       message: `Password reset successfully for user "${user.username}" (${user.role})`,
-      newPassword: newPassword, // Return the new password
+      newPassword, // Return the new password
+      user: user.toJSON?.() ?? { username: user.username, role: user.role },
     });
   } catch (error: any) {
     res.status(400).json({ error: error.message });

@@ -11,8 +11,12 @@ export interface IShop extends Document {
   ownerName?: string;
   email?: string;
   phone?: string;
+  logoUrl?: string;
   address?: string;
   gstNumber?: string;
+  numberOfShopOwner?: string;
+  instaId?: string;
+  fbId?: string;
 
   // Subscription / plan tracking (manual, set by super admin - no payment gateway)
   plan: ShopPlan;
@@ -41,6 +45,10 @@ const shopSchema = new Schema<IShop>(
     phone: { type: String },
     address: { type: String },
     gstNumber: { type: String },
+    logoUrl: { type: String },
+    numberOfShopOwner: { type: String },
+    instaId: { type: String },
+    fbId: { type: String },
 
     plan: { type: String, enum: ['trial', 'basic', 'standard', 'premium'], default: 'trial' },
     status: { type: String, enum: ['active', 'suspended', 'expired'], default: 'active' },
