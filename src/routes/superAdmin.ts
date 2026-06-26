@@ -5,6 +5,7 @@ import { getSuperAdminModel } from '../models/master/SuperAdmin';
 import { getShopModel } from '../models/master/Shop';
 import { signSuperAdminToken } from '../utils/jwt';
 import { requireSuperAdmin } from '../middleware/auth';
+import { getDemoRequestModel } from '@/models/master/DemoRequest';
 import { getTenantContext, closeTenantConnection, dbNameForShop } from '../config/tenantDb';
 
 const router = Router();
@@ -64,6 +65,27 @@ router.post('/login', async (req: Request, res: Response) => {
   }
 });
 
+// Create a new demo request (public)
+router.post('/demo-requests', async (req: Request, res: Response) => {
+  try {
+    const { name, shopName, phone, email, address } = req.body;
+    if (!name || !shopName || !phone) {
+      return res.status(400).json({ error: 'Name, shop name, and phone are required' });
+    }
+
+    const masterConn = getMasterConnection();
+    const DemoRequest = getDemoRequestModel(masterConn);
+
+    const newRequest = new DemoRequest({ name, shopName, phone, email, address, status: 'Pending' });
+    await newRequest.save();
+
+    res.status(201).json(newRequest.toJSON());
+  } catch (error: any) {
+    console.error('[Demo Request] create error:', error.message);
+    res.status(500).json({ error: 'Failed to submit demo request.' });
+  }
+});
+
 
 // Get current super admin profile
 router.get('/me', requireSuperAdmin, async (req: Request, res: Response) => {
@@ -83,6 +105,35 @@ router.get('/me', requireSuperAdmin, async (req: Request, res: Response) => {
 /* ---------------------------------------------------------------------- */
 
 router.use(requireSuperAdmin);
+
+// Get all demo requests (protected)
+router.get('/demo-requests', async (_req: Request, res: Response) => {
+  try {
+    const masterConn = getMasterConnection();
+    const DemoRequest = getDemoRequestModel(masterConn);
+    const requests = await DemoRequest.find().sort({ createdAt: -1 });
+    res.json(requests.map(r => r.toJSON()));
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update a demo request status (protected)
+router.put('/demo-requests/:id', async (req: Request, res: Response) => {
+  try {
+    const { status } = req.body;
+    if (!status) {
+      return res.status(400).json({ error: 'Status is required' });
+    }
+    const masterConn = getMasterConnection();
+    const DemoRequest = getDemoRequestModel(masterConn);
+    const updatedRequest = await DemoRequest.findByIdAndUpdate(req.params.id, { status }, { new: true });
+    if (!updatedRequest) return res.status(404).json({ error: 'Request not found' });
+    res.json(updatedRequest.toJSON());
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
 
 // List all shops
 router.get('/shops', async (_req: Request, res: Response) => {
