@@ -225,6 +225,14 @@ router.post('/shops', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'All admin passwords must be at least 6 characters' });
     }
 
+    const normalizedGstUsername = String(gstAdminUsername).toLowerCase().trim();
+    const normalizedNonGstUsername = String(nonGstAdminUsername).toLowerCase().trim();
+    if (normalizedGstUsername === normalizedNonGstUsername) {
+      return res.status(400).json({
+        error: 'GST Owner and Non-GST Operator usernames must be different',
+      });
+    }
+
     const masterConn = getMasterConnection();
     const Shop = getShopModel(masterConn);
 
@@ -251,7 +259,8 @@ router.post('/shops', async (req: Request, res: Response) => {
       status: 'active',
       subscriptionStartDate: new Date(),
       subscriptionEndDate: endDate,
-      initialAdminUsername: gstAdminUsername.toLowerCase().trim(),
+      initialAdminUsername: normalizedGstUsername,
+      initialOperatorUsername: normalizedNonGstUsername, // Store the operator username
       dbName: '', // filled below once we know the _id
       notes,
     });
@@ -259,31 +268,39 @@ router.post('/shops', async (req: Request, res: Response) => {
     shop.dbName = dbNameForShop(normalizedSlug);
     await shop.save();
 
-    // Step 2: provision the shop's own physical database + first owner user.
-    const tenantModels = await getTenantContext(shop.dbName);
+    try {
+      // Step 2: provision the shop's own physical database + first owner user.
+      const tenantModels = await getTenantContext(shop.dbName);
 
-    // Create GST Owner (role: 'owner')
-    const gstPasswordHash = await bcrypt.hash(gstAdminPassword, 10);
-    await tenantModels.User.create({
-      username: gstAdminUsername.toLowerCase().trim(),
-      passwordHash: gstPasswordHash,
-      name: ownerName || shopName,
-      role: 'owner',
-      isActive: true,
-    });
+      // Create GST Owner (role: 'owner')
+      const gstPasswordHash = await bcrypt.hash(gstAdminPassword, 10);
+      await tenantModels.User.create({
+        username: normalizedGstUsername,
+        passwordHash: gstPasswordHash,
+        name: ownerName || shopName,
+        role: 'owner',
+        isActive: true,
+      });
 
-    // Create Non-GST Operator (role: 'operator')
-    const nonGstPasswordHash = await bcrypt.hash(nonGstAdminPassword, 10);
-    await tenantModels.User.create({
-      username: nonGstAdminUsername.toLowerCase().trim(),
-      passwordHash: nonGstPasswordHash,
-      name: `${ownerName || shopName} (Non-GST)`,
-      role: 'operator',
-      isActive: true,
-    });
+      // Create Non-GST Operator (role: 'operator')
+      const nonGstPasswordHash = await bcrypt.hash(nonGstAdminPassword, 10);
+      await tenantModels.User.create({
+        username: normalizedNonGstUsername,
+        passwordHash: nonGstPasswordHash,
+        name: `${ownerName || shopName} (Non-GST)`,
+        role: 'operator',
+        isActive: true,
+      });
 
-    // Seed a default gold rates document so the shop's app has something to show.
-    await tenantModels.GoldRates.create({ gold24: 0, gold22: 0, gold18: 0, silver: 0 });
+      // Seed a default gold rates document so the shop's app has something to show.
+      await tenantModels.GoldRates.create({ gold24: 0, gold22: 0, gold18: 0, silver: 0 });
+    } catch (provisionError: any) {
+      // Tenant provisioning failed partway through — remove the master-DB shop
+      // record so the slug isn't left stuck on a shop that never fully came up.
+      await Shop.findByIdAndDelete(shop._id);
+      await closeTenantConnection(shop.dbName);
+      throw provisionError;
+    }
 
     res.status(201).json({
       shop: shop.toJSON(),

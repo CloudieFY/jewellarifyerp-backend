@@ -17,6 +17,7 @@ export interface IShop extends Document {
   numberOfShopOwner?: string;
   instaId?: string;
   fbId?: string;
+  termsAndConditions?: string;
 
   // Subscription / plan tracking (manual, set by super admin - no payment gateway)
   plan: ShopPlan;
@@ -49,6 +50,7 @@ const shopSchema = new Schema<IShop>(
     numberOfShopOwner: { type: String },
     instaId: { type: String },
     fbId: { type: String },
+    termsAndConditions: { type: String },
 
     plan: { type: String, enum: ['trial', 'basic', 'standard', 'premium'], default: 'trial' },
     status: { type: String, enum: ['active', 'suspended', 'expired'], default: 'active' },

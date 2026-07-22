@@ -20,8 +20,8 @@ async function applyInventoryDeductionFromInvoiceItems(
   session: any,
 ) {
   for (const item of invoiceItems) {
-    const normalizedProductId = normalizeInvoiceProductId(item.productId);
-    if (!normalizedProductId || normalizedProductId.startsWith('manual-')) {
+    const normalizedProductId = normalizeInvoiceProductId(item.productId || "");
+    if (!normalizedProductId || normalizedProductId.startsWith('manual')) {
       continue;
     }
 
@@ -68,8 +68,8 @@ async function restoreInventoryFromInvoiceItems(
   session: any,
 ) {
   for (const item of invoiceItems) {
-    const normalizedProductId = normalizeInvoiceProductId(item.productId);
-    if (!normalizedProductId || normalizedProductId.startsWith('manual-')) {
+    const normalizedProductId = normalizeInvoiceProductId(item.productId || "");
+    if (!normalizedProductId || normalizedProductId.startsWith('manual')) {
       continue;
     }
 

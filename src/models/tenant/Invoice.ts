@@ -3,13 +3,18 @@ import { Schema, Connection, Model, Document } from 'mongoose';
 interface IInvoiceItem {
   productId: string;
   name: string;
-  purity: string;
+  purity?: string;
   netWeight: number;
   ratePerGram: number;
   makingCharge: number;
+  makingChargePct?: number;
+  makingChargeType?: 'PERCENTAGE' | 'PER_GRAM' | 'FIXED' | 'PER_PIECE';
+  makingChargeValue?: number;
   stoneCharge: number;
   gstPct: number;
   qty: number;
+  huid?: string;
+  hmc?: number;
 }
 
 interface IInvoicePayment {
@@ -45,13 +50,18 @@ export interface IInvoice extends Document {
 const invoiceItemSchema = new Schema<IInvoiceItem>({
   productId: { type: String, required: true },
   name: { type: String, required: true },
-  purity: { type: String, required: true },
+  purity: { type: String },
   netWeight: { type: Number, required: true },
   ratePerGram: { type: Number, required: true },
   makingCharge: { type: Number, required: true },
+  makingChargePct: { type: Number },
+  makingChargeType: { type: String, enum: ['PERCENTAGE', 'PER_GRAM', 'FIXED', 'PER_PIECE'] },
+  makingChargeValue: { type: Number },
   stoneCharge: { type: Number, required: true },
   gstPct: { type: Number, required: true },
   qty: { type: Number, required: true },
+  huid: { type: String },
+  hmc: { type: Number },
 });
 
 const invoicePaymentSchema = new Schema<IInvoicePayment>({

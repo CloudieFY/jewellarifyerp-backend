@@ -1,92 +1,94 @@
 import { Router, Request, Response } from 'express';
 import { requireTenantAuth } from '../middleware/auth';
+import mongoose from 'mongoose';
 
 const router = Router();
 
-// Helper to strip dummy phone placeholder values before sending to client
-const cleanCustomer = (doc: any) => {
-  const obj = doc.toJSON ? doc.toJSON() : { ...doc };
-  if (obj.phone && obj.phone.startsWith('no_phone_')) {
-    obj.phone = '';
-  }
-  if (obj.phone2 && obj.phone2.startsWith('no_phone2_')) {
-    obj.phone2 = '';
-  }
-  return obj;
-};
-
+// Get all customers
 router.get('/', requireTenantAuth(), async (req: Request, res: Response) => {
   try {
-    const customers = await req.tenant!.models.Customer.find().sort({ createdAt: -1 });
-    res.json(customers.map(cleanCustomer));
+    const customers = await req.tenant!.models.Customer.find().sort({ name: 1 });
+    res.json(customers.map(c => c.toJSON()));
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch customers' });
   }
 });
 
-router.get('/:id', requireTenantAuth(), async (req: Request, res: Response) => {
-  try {
-    const customer = await req.tenant!.models.Customer.findById(req.params.id);
-    if (!customer) return res.status(404).json({ error: 'Customer not found' });
-    res.json(cleanCustomer(customer));
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch customer' });
-  }
-});
-
+// Create a new customer
 router.post('/', requireTenantAuth(['owner', 'operator']), async (req: Request, res: Response) => {
   try {
-    const customerData = { ...req.body };
-    delete customerData.id;
-    delete customerData._id;
-
-    if (!customerData.phone || customerData.phone.trim() === '') {
-      customerData.phone = `no_phone_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-    }
-    if (!customerData.phone2 || customerData.phone2.trim() === '') {
-      customerData.phone2 = `no_phone2_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const { name, phone } = req.body;
+    if (!name) {
+      return res.status(400).json({ error: 'Customer name is required' });
     }
 
-    const customer = new req.tenant!.models.Customer(customerData);
-    await customer.save();
-    res.status(201).json(cleanCustomer(customer));
-  } catch (error: any) {
-    console.error('[Customers] create error:', error.message);
-    res.status(400).json({ error: error?.message || 'Bad Request', details: error?.errors || undefined });
-  }
-});
-
-router.put('/:id', requireTenantAuth(['owner', 'operator']), async (req: Request, res: Response) => {
-  try {
-    const updateData = { ...req.body };
-    delete updateData.id;
-    delete updateData._id;
-
-    if (updateData.phone !== undefined && updateData.phone.trim() === '') {
-      updateData.phone = `no_phone_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-    }
-    if (updateData.phone2 !== undefined && updateData.phone2.trim() === '') {
-      updateData.phone2 = `no_phone2_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    // Simple phone-based deduplication
+    if (phone) {
+      const existing = await req.tenant!.models.Customer.findOne({ phone });
+      if (existing) {
+        return res.status(409).json({ error: 'A customer with this phone number already exists.' });
+      }
     }
 
-    const customer = await req.tenant!.models.Customer.findByIdAndUpdate(req.params.id, updateData, {
-      new: true,
-      runValidators: true,
-    });
-    if (!customer) return res.status(404).json({ error: 'Customer not found' });
-    res.json(cleanCustomer(customer));
+    const customer = new req.tenant!.models.Customer(req.body);
+    const savedCustomer = await customer.save();
+    res.status(201).json(savedCustomer.toJSON());
   } catch (error: any) {
     res.status(400).json({ error: error.message });
   }
 });
 
-router.delete('/:id', requireTenantAuth(['owner', 'operator']), async (req: Request, res: Response) => {
+// Update a customer
+router.put('/:id', requireTenantAuth(['owner', 'operator']), async (req: Request, res: Response) => {
   try {
-    const customer = await req.tenant!.models.Customer.findByIdAndDelete(req.params.id);
-    if (!customer) return res.status(404).json({ error: 'Customer not found' });
-    res.json({ message: 'Customer deleted' });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to delete customer' });
+    const customer = await req.tenant!.models.Customer.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    if (!customer) {
+      return res.status(404).json({ error: 'Customer not found' });
+    }
+    res.json(customer.toJSON());
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Delete a customer and all their associated data
+router.delete('/:id', requireTenantAuth(['owner', 'operator']), async (req: Request, res: Response) => {
+  const session = await req.tenant!.models.Customer.startSession();
+  session.startTransaction();
+  try {
+    const customerId = req.params.id;
+    const customer = await req.tenant!.models.Customer.findById(customerId).session(session);
+    if (!customer) {
+      await session.abortTransaction();
+      return res.status(404).json({ error: 'Customer not found' });
+    }
+
+    // Delete all associated data
+    await req.tenant!.models.Invoice.deleteMany({ customerId }, { session });
+    await req.tenant!.models.Order.deleteMany({ customerId }, { session });
+    
+    // For models that might use phone number instead of customerId
+    if (customer.phone) {
+      await req.tenant!.models.Order.deleteMany({ customerMobile: customer.phone }, { session });
+      await req.tenant!.models.Repair.deleteMany({ customerMobile: customer.phone }, { session });
+      await req.tenant!.models.Girvi.deleteMany({ customerMobile: customer.phone }, { session });
+    }
+    
+    await req.tenant!.models.Repair.deleteMany({ customerId }, { session });
+    await req.tenant!.models.Girvi.deleteMany({ customerId }, { session });
+    await req.tenant!.models.Advance.deleteMany({ customerId }, { session });
+
+    // Finally, delete the customer
+    await req.tenant!.models.Customer.findByIdAndDelete(customerId).session(session);
+
+    await session.commitTransaction();
+    res.json({ message: 'Customer and all associated data deleted successfully' });
+  } catch (error: any) {
+    await session.abortTransaction();
+    console.error('[DELETE /customers/:id] failed:', error.message);
+    res.status(500).json({ error: 'Failed to delete customer and their data' });
+  } finally {
+    session.endSession();
   }
 });
 
