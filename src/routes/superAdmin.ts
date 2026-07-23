@@ -7,6 +7,7 @@ import { signSuperAdminToken } from '../utils/jwt';
 import { requireSuperAdmin } from '../middleware/auth';
 import { getDemoRequestModel } from '@/models/master/DemoRequest';
 import { getTenantContext, closeTenantConnection, dbNameForShop } from '../config/tenantDb';
+import { encryptPassword, decryptPassword } from '../utils/passwordCrypto';
 
 const router = Router();
 
@@ -277,6 +278,7 @@ router.post('/shops', async (req: Request, res: Response) => {
       await tenantModels.User.create({
         username: normalizedGstUsername,
         passwordHash: gstPasswordHash,
+        passwordEncrypted: encryptPassword(gstAdminPassword),
         name: ownerName || shopName,
         role: 'owner',
         isActive: true,
@@ -287,6 +289,7 @@ router.post('/shops', async (req: Request, res: Response) => {
       await tenantModels.User.create({
         username: normalizedNonGstUsername,
         passwordHash: nonGstPasswordHash,
+        passwordEncrypted: encryptPassword(nonGstAdminPassword),
         name: `${ownerName || shopName} (Non-GST)`,
         role: 'operator',
         isActive: true,
@@ -472,12 +475,53 @@ router.post('/shops/:id/reset-user-password', async (req: Request, res: Response
     }
 
     user.passwordHash = await bcrypt.hash(newPassword, 10);
+    user.passwordEncrypted = encryptPassword(newPassword);
     await user.save();
 
     res.json({
       message: `Password reset successfully for user "${user.username}" (${user.role})`,
       newPassword, // Return the new password
       user: user.toJSON?.() ?? { username: user.username, role: user.role },
+    });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// View a shop user's current password (super admin support action).
+// Only works for passwords set/reset after passwordEncrypted was introduced —
+// accounts whose password predates this feature have no recoverable copy.
+router.get('/shops/:id/users/:role/password', async (req: Request, res: Response) => {
+  try {
+    const role = String(req.params.role).toLowerCase().trim();
+    if (!['owner', 'operator'].includes(role)) {
+      return res.status(400).json({ error: 'role must be "owner" or "operator"' });
+    }
+
+    const masterConn = getMasterConnection();
+    const Shop = getShopModel(masterConn);
+    const shop = await Shop.findById(req.params.id);
+    if (!shop) return res.status(404).json({ error: 'Shop not found' });
+
+    const canonicalUsername = role === 'owner' ? shop.initialAdminUsername : shop.initialOperatorUsername;
+    if (!canonicalUsername) {
+      return res.status(404).json({ error: `No ${role} username recorded for this shop` });
+    }
+
+    const tenantModels = await getTenantContext(shop.dbName);
+    const user = await tenantModels.User.findOne({ username: canonicalUsername, role }).select('+passwordEncrypted username role');
+    if (!user) return res.status(404).json({ error: `No ${role} user found for this shop` });
+
+    if (!user.passwordEncrypted) {
+      return res.status(404).json({
+        error: `No recoverable password stored for "${user.username}" — it was set before this feature existed. Use Reset Password to set a new one.`,
+      });
+    }
+
+    res.json({
+      username: user.username,
+      role: user.role,
+      password: decryptPassword(user.passwordEncrypted),
     });
   } catch (error: any) {
     res.status(400).json({ error: error.message });

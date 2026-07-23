@@ -25,10 +25,11 @@ export interface IShop extends Document {
   subscriptionStartDate: Date;
   subscriptionEndDate: Date;
 
-  // The very first login user created for this shop (the "shop admin").
-  // Actual credentials live in the tenant DB's User collection; this is
-  // just a convenience pointer for the super admin dashboard.
+  // The very first login users created for this shop (owner + operator).
+  // Actual credentials live in the tenant DB's User collection; these are
+  // just convenience pointers for the super admin dashboard.
   initialAdminUsername: string;
+  initialOperatorUsername?: string;
 
   dbName: string; // e.g. "shop_64f1a2b3c4d5e6f7a8b9c0d1"
 
@@ -58,6 +59,7 @@ const shopSchema = new Schema<IShop>(
     subscriptionEndDate: { type: Date, required: true },
 
     initialAdminUsername: { type: String, required: true },
+    initialOperatorUsername: { type: String },
 
     dbName: { type: String, required: true, unique: true },
 

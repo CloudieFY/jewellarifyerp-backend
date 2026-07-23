@@ -5,6 +5,7 @@ import { getShopModel } from '../models/master/Shop';
 import { getTenantContext } from '../config/tenantDb';
 import { signTenantToken } from '../utils/jwt';
 import { requireTenantAuth } from '../middleware/auth';
+import { encryptPassword } from '../utils/passwordCrypto';
 
 const router = Router();
 
@@ -137,6 +138,7 @@ router.post('/change-password', requireTenantAuth(), async (req: Request, res: R
     if (!ok) return res.status(401).json({ error: 'Current password is incorrect' });
 
     user.passwordHash = await bcrypt.hash(newPassword, 10);
+    user.passwordEncrypted = encryptPassword(newPassword);
     await user.save();
     res.json({ message: 'Password updated successfully' });
   } catch (error: any) {
@@ -173,6 +175,7 @@ router.post('/users', requireTenantAuth(['owner']), async (req: Request, res: Re
     const user = await req.tenant!.models.User.create({
       username: String(username).toLowerCase().trim(),
       passwordHash,
+      passwordEncrypted: encryptPassword(password),
       name,
       role,
       karigarRefId,
@@ -191,8 +194,10 @@ router.put('/users/:id', requireTenantAuth(['owner']), async (req: Request, res:
   try {
     const updateData: any = { ...req.body };
     delete updateData.passwordHash;
+    delete updateData.passwordEncrypted;
     if (updateData.password) {
       updateData.passwordHash = await bcrypt.hash(updateData.password, 10);
+      updateData.passwordEncrypted = encryptPassword(updateData.password);
       delete updateData.password;
     }
     const user = await req.tenant!.models.User.findByIdAndUpdate(req.params.id, updateData, {
