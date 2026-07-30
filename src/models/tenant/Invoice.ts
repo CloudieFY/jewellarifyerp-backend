@@ -97,7 +97,6 @@ const invoiceSchema = new Schema<IInvoice>(
 );
 
 invoiceSchema.index({ createdAt: -1 });
-invoiceSchema.index({ number: 1 }, { unique: true });
 invoiceSchema.index({ customerId: 1 });
 invoiceSchema.index({ customerMobile: 1 });
 invoiceSchema.index({ type: 1 });
