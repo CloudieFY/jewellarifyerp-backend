@@ -5,7 +5,7 @@ import { getSuperAdminModel } from '../models/master/SuperAdmin';
 import { getShopModel } from '../models/master/Shop';
 import { signSuperAdminToken } from '../utils/jwt';
 import { requireSuperAdmin } from '../middleware/auth';
-import { getDemoRequestModel } from '@/models/master/DemoRequest';
+import { getDemoRequestModel } from '../models/master/DemoRequest';
 import { getTenantContext, closeTenantConnection, dbNameForShop } from '../config/tenantDb';
 import { encryptPassword, decryptPassword } from '../utils/passwordCrypto';
 
