@@ -2,7 +2,7 @@
   "name": "jewelshop-saas-backend",
   "version": "1.0.0",
   "description": "Multi-tenant SaaS backend for Jewellery Shop Management (Express + MongoDB Atlas)",
-  "type": "module",
+  
   "main": "dist/index.js",
   "engines": {
     "node": ">=22.0.0"
