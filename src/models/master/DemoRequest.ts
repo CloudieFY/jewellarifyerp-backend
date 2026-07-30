@@ -6,6 +6,7 @@ export interface IDemoRequest extends Document {
   phone: string;
   email?: string;
   address?: string;
+  message?: string;
   status: 'Pending' | 'Contacted' | 'Closed';
   createdAt: Date;
   updatedAt: Date;
@@ -17,6 +18,7 @@ const DemoRequestSchema: Schema = new Schema({
   phone: { type: String, required: true },
   email: { type: String },
   address: { type: String },
+  message: { type: String },
   status: { type: String, enum: ['Pending', 'Contacted', 'Closed'], default: 'Pending' },
 }, { timestamps: true });
 

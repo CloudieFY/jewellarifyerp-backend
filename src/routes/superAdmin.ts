@@ -69,7 +69,7 @@ router.post('/login', async (req: Request, res: Response) => {
 // Create a new demo request (public)
 router.post('/demo-requests', async (req: Request, res: Response) => {
   try {
-    const { name, shopName, phone, email, address } = req.body;
+    const { name, shopName, phone, email, address, message } = req.body;
     if (!name || !shopName || !phone) {
       return res.status(400).json({ error: 'Name, shop name, and phone are required' });
     }
@@ -77,7 +77,7 @@ router.post('/demo-requests', async (req: Request, res: Response) => {
     const masterConn = getMasterConnection();
     const DemoRequest = getDemoRequestModel(masterConn);
 
-    const newRequest = new DemoRequest({ name, shopName, phone, email, address, status: 'Pending' });
+    const newRequest = new DemoRequest({ name, shopName, phone, email, address, message, status: 'Pending' });
     await newRequest.save();
 
     res.status(201).json(newRequest.toJSON());
@@ -131,6 +131,19 @@ router.put('/demo-requests/:id', async (req: Request, res: Response) => {
     const updatedRequest = await DemoRequest.findByIdAndUpdate(req.params.id, { status }, { new: true });
     if (!updatedRequest) return res.status(404).json({ error: 'Request not found' });
     res.json(updatedRequest.toJSON());
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Delete a demo request (protected)
+router.delete('/demo-requests/:id', async (req: Request, res: Response) => {
+  try {
+    const masterConn = getMasterConnection();
+    const DemoRequest = getDemoRequestModel(masterConn);
+    const deletedRequest = await DemoRequest.findByIdAndDelete(req.params.id);
+    if (!deletedRequest) return res.status(404).json({ error: 'Request not found' });
+    res.json({ message: 'Demo request deleted successfully' });
   } catch (error: any) {
     res.status(400).json({ error: error.message });
   }
