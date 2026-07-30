@@ -4,6 +4,9 @@
   "description": "Multi-tenant SaaS backend for Jewellery Shop Management (Express + MongoDB Atlas)",
   "type": "module",
   "main": "dist/index.js",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
@@ -23,9 +26,9 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.7",
-    "@types/node": "^22.16.5",
+    "@types/node": "^22.13.0",
     "ts-node": "^10.9.2",
     "tsx": "^4.7.0",
-    "typescript": "^5.6.3"
+    "typescript": "^5.7.3"
   }
 }
