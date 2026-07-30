@@ -1,0 +1,109 @@
+import { Schema, Connection, Model, Document } from 'mongoose';
+
+interface IInvoiceItem {
+  productId: string;
+  name: string;
+  purity?: string;
+  netWeight: number;
+  ratePerGram: number;
+  makingCharge: number;
+  makingChargePct?: number;
+  makingChargeType?: 'PERCENTAGE' | 'PER_GRAM' | 'FIXED' | 'PER_PIECE';
+  makingChargeValue?: number;
+  stoneCharge: number;
+  gstPct: number;
+  qty: number;
+  huid?: string;
+  hmc?: number;
+}
+
+interface IInvoicePayment {
+  date: Date;
+  amount: number;
+  mode: string;
+  note?: string;
+}
+
+export interface IInvoice extends Document {
+  number: string;
+  type: 'GST' | 'NON-GST';
+  customerId?: string;
+  customerName: string;
+  customerMobile?: string;
+  items: IInvoiceItem[];
+  discount: number;
+  oldGoldAmount: number;
+  paymentMode: 'Cash' | 'UPI' | 'Card' | 'EMI';
+  subtotal: number;
+  gstAmount: number;
+  total: number;
+  amountPaid?: number;
+  balanceDue?: number;
+  payments: IInvoicePayment[];
+  customerAddress?: string;
+  customerSignature?: string;
+  authorizedSignatory?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const invoiceItemSchema = new Schema<IInvoiceItem>({
+  productId: { type: String, required: true },
+  name: { type: String, required: true },
+  purity: { type: String },
+  netWeight: { type: Number, required: true },
+  ratePerGram: { type: Number, required: true },
+  makingCharge: { type: Number, required: true },
+  makingChargePct: { type: Number },
+  makingChargeType: { type: String, enum: ['PERCENTAGE', 'PER_GRAM', 'FIXED', 'PER_PIECE'] },
+  makingChargeValue: { type: Number },
+  stoneCharge: { type: Number, required: true },
+  gstPct: { type: Number, required: true },
+  qty: { type: Number, required: true },
+  huid: { type: String },
+  hmc: { type: Number },
+});
+
+const invoicePaymentSchema = new Schema<IInvoicePayment>({
+  date: { type: Date, required: true, default: Date.now },
+  amount: { type: Number, required: true },
+  mode: { type: String, required: true },
+  note: { type: String },
+});
+
+const invoiceSchema = new Schema<IInvoice>(
+  {
+    number: { type: String, required: true, unique: true },
+    type: { type: String, enum: ['GST', 'NON-GST'], required: true },
+    customerId: { type: String },
+    customerName: { type: String, required: true },
+    customerMobile: { type: String },
+    items: { type: [invoiceItemSchema], required: true },
+    discount: { type: Number, required: true, default: 0 },
+    oldGoldAmount: { type: Number, required: true, default: 0 },
+    paymentMode: { type: String, enum: ['Cash', 'UPI', 'Card', 'EMI'], required: true },
+    subtotal: { type: Number, required: true },
+    gstAmount: { type: Number, required: true },
+    total: { type: Number, required: true },
+    amountPaid: { type: Number },
+    balanceDue: { type: Number },
+    payments: { type: [invoicePaymentSchema], default: [] },
+    customerAddress: { type: String },
+    customerSignature: { type: String },
+    authorizedSignatory: { type: String },
+    createdAt: { type: Date, required: true, default: Date.now, immutable: false },
+  },
+  { timestamps: { createdAt: false, updatedAt: true } }
+);
+
+invoiceSchema.index({ createdAt: -1 });
+invoiceSchema.index({ number: 1 }, { unique: true });
+invoiceSchema.index({ customerId: 1 });
+invoiceSchema.index({ customerMobile: 1 });
+invoiceSchema.index({ type: 1 });
+
+export function getInvoiceModel(conn: Connection): Model<IInvoice> {
+  return (
+    (conn.models.Invoice as Model<IInvoice>) || conn.model<IInvoice>('Invoice', invoiceSchema)
+  );
+}
