@@ -15,6 +15,18 @@ function normalizeInvoiceProductId(productId: string) {
   return productId;
 }
 
+/** Extract the grossWeight that was encoded into the productId by the frontend */
+function parseGrossWeightFromProductId(productId: string): number {
+  if (!productId || !productId.includes('__GW_')) return 0;
+  try {
+    const afterGW = productId.split('__GW_')[1]; // e.g. "100__SW_10"
+    const gwStr = afterGW ? afterGW.split('__SW_')[0] : '0';
+    return Number(gwStr) || 0;
+  } catch {
+    return 0;
+  }
+}
+
 async function getNextInvoiceNumber(
   InvoiceModel: Model<IInvoice>,
   type: 'GST' | 'NON-GST',
@@ -75,17 +87,25 @@ async function applyInventoryDeductionFromInvoiceItems(
     }
 
     const deductStock = item.qty;
-    const deductWt = item.netWeight * item.qty;
+    // item.netWeight is the TOTAL net weight for this invoice line (all qty combined),
+    // not per-unit. Do NOT multiply by qty again.
+    const deductWt = item.netWeight;
+    // grossWeight is encoded in the productId string by the frontend as "id__GW_<gw>__SW_<sw>"
+    const deductGrossWt = parseGrossWeightFromProductId(item.productId || '');
 
     if (inventory.stock < deductStock) {
       throw new Error(`Insufficient stock for ${inventory._id}`);
     }
-    if (inventory.netWeight < deductWt) {
+    // Allow a small float tolerance (0.001g) to avoid false errors from rounding
+    if (inventory.netWeight < deductWt - 0.001) {
       throw new Error(`Insufficient wt for ${inventory._id}`);
     }
 
     inventory.stock = inventory.stock - deductStock;
-    inventory.netWeight = inventory.netWeight - deductWt;
+    inventory.netWeight = Math.max(0, Number((inventory.netWeight - deductWt).toFixed(3)));
+    if (deductGrossWt > 0) {
+      inventory.grossWeight = Math.max(0, Number(((inventory.grossWeight || 0) - deductGrossWt).toFixed(3)));
+    }
     await inventory.save({ session });
 
     if (StockLedgerModel) {
@@ -97,7 +117,7 @@ async function applyInventoryDeductionFromInvoiceItems(
           itemName: inventory.name,
           transactionType: 'SALE',
           qtyChange: -deductStock,
-          grossWeightChange: -(inventory.grossWeight || 0),
+          grossWeightChange: -deductGrossWt,
           netWeightChange: -deductWt,
           balanceQty: inventory.stock,
           balanceGrossWeight: inventory.grossWeight,
@@ -145,10 +165,17 @@ async function restoreInventoryFromInvoiceItems(
     if (!inventory) continue; // skip if not found during restoration
 
     const restoreStock = item.qty;
-    const restoreWt = item.netWeight * item.qty;
+    // item.netWeight is the TOTAL net weight for this invoice line (all qty combined),
+    // not per-unit. Do NOT multiply by qty again.
+    const restoreWt = item.netWeight;
+    // grossWeight is encoded in the productId string by the frontend
+    const restoreGrossWt = parseGrossWeightFromProductId(item.productId || '');
 
     inventory.stock = inventory.stock + restoreStock;
-    inventory.netWeight = inventory.netWeight + restoreWt;
+    inventory.netWeight = Number((inventory.netWeight + restoreWt).toFixed(3));
+    if (restoreGrossWt > 0) {
+      inventory.grossWeight = Number(((inventory.grossWeight || 0) + restoreGrossWt).toFixed(3));
+    }
     await inventory.save({ session });
 
     if (StockLedgerModel) {
@@ -160,7 +187,7 @@ async function restoreInventoryFromInvoiceItems(
           itemName: inventory.name,
           transactionType: 'RETURN',
           qtyChange: restoreStock,
-          grossWeightChange: inventory.grossWeight || 0,
+          grossWeightChange: restoreGrossWt,
           netWeightChange: restoreWt,
           balanceQty: inventory.stock,
           balanceGrossWeight: inventory.grossWeight,
