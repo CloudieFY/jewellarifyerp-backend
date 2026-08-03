@@ -24,7 +24,7 @@ export interface ITenantUser extends Document {
   role: TenantUserRole;
   karigarRefId?: string; // if role === 'karigar', links to the Karigars doc
   isActive: boolean;
-  preferredLanguage?: 'en' | 'hi';
+  preferredLanguage?: 'en' | 'hi' | 'gu' | 'mr' | 'ta' | 'te' | 'kn' | 'ml' | 'pa' | 'bn' | 'or';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -38,7 +38,11 @@ const tenantUserSchema = new Schema<ITenantUser>(
     role: { type: String, enum: ['owner', 'operator', 'karigar'], required: true },
     karigarRefId: { type: String },
     isActive: { type: Boolean, default: true },
-    preferredLanguage: { type: String, enum: ['en', 'hi'], default: 'en' },
+    preferredLanguage: {
+      type: String,
+      enum: ['en', 'hi', 'gu', 'mr', 'ta', 'te', 'kn', 'ml', 'pa', 'bn', 'or'],
+      default: 'en',
+    },
   },
   { timestamps: true }
 );

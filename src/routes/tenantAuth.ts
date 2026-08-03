@@ -183,8 +183,9 @@ router.post('/change-password', requireTenantAuth(), async (req: Request, res: R
 router.put('/language', requireTenantAuth(), async (req: Request, res: Response) => {
   try {
     const { preferredLanguage } = req.body;
-    if (preferredLanguage !== 'en' && preferredLanguage !== 'hi') {
-      return res.status(400).json({ error: 'preferredLanguage must be "en" or "hi"' });
+    const ALLOWED_LANGUAGES = ['en', 'hi', 'gu', 'mr', 'ta', 'te', 'kn', 'ml', 'pa', 'bn', 'or'];
+    if (!ALLOWED_LANGUAGES.includes(preferredLanguage)) {
+      return res.status(400).json({ error: `preferredLanguage must be one of: ${ALLOWED_LANGUAGES.join(', ')}` });
     }
 
     const user = await req.tenant!.models.User.findById(req.tenantAuth!.sub);
