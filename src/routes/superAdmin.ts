@@ -80,6 +80,16 @@ router.post('/demo-requests', async (req: Request, res: Response) => {
     const newRequest = new DemoRequest({ name, shopName, phone, email, address, message, status: 'Pending' });
     await newRequest.save();
 
+    // Console notification for super admin monitoring
+    console.log('\n🔔 ========== NEW SUPPORT TICKET ==========');
+    console.log(`👤 Name:    ${name}`);
+    console.log(`🏪 Shop:    ${shopName}`);
+    console.log(`📱 Phone:   ${phone}`);
+    if (email) console.log(`📧 Email:   ${email}`);
+    if (message) console.log(`📝 Message: ${message}`);
+    console.log(`🕐 Time:    ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}`);
+    console.log('==========================================\n');
+
     res.status(201).json(newRequest.toJSON());
   } catch (error: any) {
     console.error('[Demo Request] create error:', error.message);
