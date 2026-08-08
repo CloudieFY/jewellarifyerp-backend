@@ -10,6 +10,7 @@ import { getKarigarsModel, IKarigar } from './Karigars';
 import { getGoldRatesModel, IGoldRates } from './GoldRates';
 import { getRepairModel, IRepair } from './Repair';
 import { getInvoiceModel, IInvoice } from './Invoice';
+import { getSalesReturnModel, ISalesReturn } from './SalesReturn';
 import { getAdvanceModel, IAdvance } from './Advance';
 import { getGirviModel, IGirvi } from './Girvi';
 import { getOrderModel, IOrder } from './Order';
@@ -45,6 +46,7 @@ export interface TenantModels {
   GoldRates: Model<IGoldRates>;
   Repair: Model<IRepair>;
   Invoice: Model<IInvoice>;
+  SalesReturn: Model<ISalesReturn>;
   Counter: Model<ICounter>;
   Advance: Model<IAdvance>;
   Girvi: Model<IGirvi>;
@@ -82,6 +84,7 @@ export function registerTenantModels(conn: Connection): TenantModels {
     GoldRates: getGoldRatesModel(conn),
     Repair: getRepairModel(conn),
     Invoice: getInvoiceModel(conn),
+    SalesReturn: getSalesReturnModel(conn),
     Counter: getCounterModel(conn),
     Advance: getAdvanceModel(conn),
     Girvi: getGirviModel(conn),

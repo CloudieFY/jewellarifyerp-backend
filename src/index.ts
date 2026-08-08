@@ -22,6 +22,7 @@ import girviRouter from './routes/girvi';
 import ordersRouter from './routes/orders';
 import employeesRouter from './routes/employees';
 import schemesRouter from './routes/schemes';
+import salesReturnsRouter from './routes/sales-returns';
 
 const app = express();
 
@@ -64,6 +65,7 @@ app.use('/api/karigars', karigarsRouter);
 app.use('/api/gold-rates', goldRatesRouter);
 app.use('/api/repairs', repairsRouter);
 app.use('/api/invoices', invoicesRouter);
+app.use('/api/sales-returns', salesReturnsRouter);
 app.use('/api/advances', advancesRouter);
 app.use('/api/girvi', girviRouter);
 app.use('/api/orders', ordersRouter);
