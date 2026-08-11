@@ -5,6 +5,8 @@ interface IInvoiceItem {
   name: string;
   purity?: string;
   netWeight: number;
+  grossWeight?: number;
+  stoneWeight?: number;
   ratePerGram: number;
   makingCharge: number;
   makingChargePct?: number;
@@ -52,6 +54,8 @@ const invoiceItemSchema = new Schema<IInvoiceItem>({
   name: { type: String, required: true },
   purity: { type: String },
   netWeight: { type: Number, required: true },
+  grossWeight: { type: Number },
+  stoneWeight: { type: Number },
   ratePerGram: { type: Number, required: true },
   makingCharge: { type: Number, required: true },
   makingChargePct: { type: Number },

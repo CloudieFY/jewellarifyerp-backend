@@ -5,6 +5,8 @@ export interface ISalesReturnItem {
   name: string;
   purity?: string;
   netWeight: number;
+  grossWeight?: number;
+  stoneWeight?: number;
   ratePerGram: number;
   makingCharge: number;
   gstPct: number;
@@ -37,6 +39,8 @@ const salesReturnItemSchema = new Schema<ISalesReturnItem>({
   name: { type: String, required: true },
   purity: { type: String },
   netWeight: { type: Number, required: true },
+  grossWeight: { type: Number },
+  stoneWeight: { type: Number },
   ratePerGram: { type: Number, required: true, default: 0 },
   makingCharge: { type: Number, default: 0 },
   gstPct: { type: Number, default: 0 },
