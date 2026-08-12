@@ -187,7 +187,7 @@ const inventorySchema = new Schema<IInventory>(
     ratePerGram: { type: Number, default: 7200 },
 
     hsnCode: { type: String, default: '7113' },
-    gstPct: { type: Number, required: true, default: 3 },
+    gstPct: { type: Number, required: true, default: 0 },
     gstType: { type: String, enum: ['Inclusive', 'Exclusive'], default: 'Exclusive' },
 
     stock: { type: Number, required: true, default: 1 },
