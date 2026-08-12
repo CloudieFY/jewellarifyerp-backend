@@ -107,11 +107,37 @@ export function buildTenantCrudRouter(pickModel: ModelPicker, options: CrudOptio
       const Model = pickModel(req.tenant!.models);
       const doc = await Model.findByIdAndDelete(req.params.id);
       if (!doc) return res.status(404).json({ error: `${resourceName} not found` });
+
+      if (resourceName === 'Inventory' || resourceName === 'inventory') {
+        const StockLedger = req.tenant!.models.StockLedger;
+        const OpeningStock = req.tenant!.models.OpeningStock;
+        if (StockLedger) {
+          await StockLedger.deleteMany({
+            $or: [
+              { itemId: doc._id },
+              { itemId: req.params.id },
+              { itemName: doc.name },
+              { item: doc.name }
+            ]
+          });
+        }
+        if (OpeningStock) {
+          await OpeningStock.deleteMany({
+            $or: [
+              { productId: doc._id },
+              { productId: req.params.id },
+              { name: doc.name }
+            ]
+          });
+        }
+      }
+
       res.json({ message: `${resourceName} deleted` });
     } catch (error: any) {
       res.status(500).json({ error: `Failed to delete ${resourceName}` });
     }
   });
+
 
   return router;
 }

@@ -238,11 +238,24 @@ router.get('/ledger', async (req: Request, res: Response) => {
     const filter: any = {};
     if (itemId) filter.itemId = itemId;
     const ledger = await req.tenant!.models.StockLedger.find(filter).sort({ createdAt: -1 });
-    res.json(ledger);
+
+    const activeItems = await req.tenant!.models.Inventory.find().select('_id name itemCode');
+    const validItemIds = new Set(activeItems.map((i: any) => i._id.toString()));
+    const validItemNames = new Set(activeItems.map((i: any) => (i.name || '').trim().toLowerCase()));
+
+    const filtered = ledger.filter((entry: any) => {
+      if (entry.itemId && validItemIds.has(entry.itemId.toString())) return true;
+      if (entry.itemName && validItemNames.has((entry.itemName || '').trim().toLowerCase())) return true;
+      if (entry.item && validItemNames.has((entry.item || '').trim().toLowerCase())) return true;
+      return false;
+    });
+
+    res.json(filtered);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 // ----------------------------------------------------
 // 14. OPENING STOCK ENTRY
@@ -336,8 +349,8 @@ router.get('/reports/summary', async (req: Request, res: Response) => {
       const cost = (item.costPrice || item.sellingPrice || 0) * q;
 
       totalStockQty += q;
-      totalGrossWeight += gw * q;
-      totalNetWeight += nw * q;
+      totalGrossWeight += gw;
+      totalNetWeight += nw;
       totalValuationCost += cost;
 
       if (q <= (item.reorderLevel || item.minStock || 1)) {
@@ -351,7 +364,7 @@ router.get('/reports/summary', async (req: Request, res: Response) => {
       }
       categoryBreakdown[cat].count += 1;
       categoryBreakdown[cat].qty += q;
-      categoryBreakdown[cat].netWeight += nw * q;
+      categoryBreakdown[cat].netWeight += nw;
       categoryBreakdown[cat].valuation += cost;
 
       // Purity breakdown
@@ -360,7 +373,8 @@ router.get('/reports/summary', async (req: Request, res: Response) => {
         purityBreakdown[pur] = { count: 0, netWeight: 0 };
       }
       purityBreakdown[pur].count += 1;
-      purityBreakdown[pur].netWeight += nw * q;
+      purityBreakdown[pur].netWeight += nw;
+
     });
 
     res.json({

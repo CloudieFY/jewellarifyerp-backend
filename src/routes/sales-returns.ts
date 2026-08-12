@@ -227,13 +227,24 @@ router.post('/', requireTenantAuth(['owner', 'operator']), async (req: Request, 
       delete body._id;
       delete body.returnNo;
 
-      if (body.date) {
-        body.date = new Date(body.date);
+      if (body.invoiceId) {
+        const existingReturn = await SalesReturn.findOne({ invoiceId: body.invoiceId }).session(session);
+        if (existingReturn) {
+          throw new Error(`Invoice ${body.invoiceNumber || ''} has already been returned.`);
+        }
       }
 
       const returnNo = await getNextSalesReturnNumber(SalesReturn, session);
       const salesReturn = new SalesReturn({ ...body, returnNo });
       const savedReturn = await salesReturn.save({ session });
+
+      if (body.invoiceId) {
+        const inv = await Invoice.findById(body.invoiceId).session(session);
+        if (inv) {
+          (inv as any).isReturned = true;
+          await inv.save({ session });
+        }
+      }
 
       // 1. Restore Inventory Stock (grossWeight + stoneWeight + netWeight + qty)
       await restoreInventoryFromSalesReturn(
