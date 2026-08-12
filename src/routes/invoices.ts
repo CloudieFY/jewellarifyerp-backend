@@ -285,28 +285,78 @@ router.post('/', requireTenantAuth(['owner', 'operator']), async (req: Request, 
 });
 
 router.put('/:id', requireTenantAuth(['owner', 'operator']), async (req: Request, res: Response) => {
+  const { Invoice, Inventory, StockLedger } = req.tenant!.models;
+  const session = await Inventory.startSession();
   try {
+    session.startTransaction();
+
+    // 1. Load the CURRENT invoice so we know what to restore
+    const oldInvoice = await Invoice.findById(req.params.id).session(session);
+    if (!oldInvoice) {
+      await session.abortTransaction();
+      return res.status(404).json({ error: 'Invoice not found' });
+    }
+
     const updateData = { ...req.body };
     delete updateData.id;
     delete updateData._id;
+    delete updateData.number; // never change invoice number on edit
 
     if (updateData.createdAt) {
       updateData.createdAt = new Date(updateData.createdAt);
     }
 
-    const invoice = await req.tenant!.models.Invoice.findByIdAndUpdate(req.params.id, updateData, {
+    // 2. Restore inventory for OLD items (undo the original sale deduction)
+    await restoreInventoryFromInvoiceItems(
+      Inventory,
+      oldInvoice.items.map((it: any) => ({
+        productId: it.productId,
+        netWeight: it.netWeight,
+        qty: it.qty,
+      })),
+      session,
+      StockLedger,
+      oldInvoice.number + ' (edit-restore)'
+    );
+
+    // 3. Deduct inventory for NEW items (apply the updated sale)
+    const newItems: Array<{ productId: string; netWeight: number; qty: number }> =
+      (updateData.items || []).map((it: any) => ({
+        productId: it.productId,
+        netWeight: it.netWeight,
+        qty: it.qty,
+      }));
+
+    if (newItems.length > 0) {
+      await applyInventoryDeductionFromInvoiceItems(
+        Inventory,
+        newItems,
+        session,
+        StockLedger,
+        oldInvoice.number + ' (edit)'
+      );
+    }
+
+    // 4. Save the updated invoice
+    const invoice = await Invoice.findByIdAndUpdate(req.params.id, updateData, {
       new: true,
       runValidators: true,
+      session,
     });
-    if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
-    res.json(invoice.toJSON());
+
+    await session.commitTransaction();
+    res.json(invoice!.toJSON());
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    await session.abortTransaction();
+    console.error('[PUT /invoices] failed:', error.message);
+    res.status(400).json({ error: error?.message || 'Failed to update invoice' });
+  } finally {
+    session.endSession();
   }
 });
 
 router.delete('/:id', requireTenantAuth(['owner', 'operator']), async (req: Request, res: Response) => {
-  const { Invoice, Inventory, StockLedger } = req.tenant!.models;
+  const { Invoice, Inventory, StockLedger, SalesReturn } = req.tenant!.models;
   const session = await Inventory.startSession();
   try {
     session.startTransaction();
@@ -317,21 +367,43 @@ router.delete('/:id', requireTenantAuth(['owner', 'operator']), async (req: Requ
       return res.status(404).json({ error: 'Invoice not found' });
     }
 
-    await restoreInventoryFromInvoiceItems(
-      Inventory,
-      invoice.items.map((it: any) => ({
-        productId: it.productId,
-        netWeight: it.netWeight,
-        qty: it.qty,
-      })),
-      session,
-      StockLedger,
-      invoice.number
-    );
+    // Check if any sales return already exists for this invoice.
+    // If yes → inventory was already restored when the return was created,
+    // so we must NOT restore it again (that would double-add stock).
+    // If no  → this is a plain invoice delete; restore inventory normally.
+    const linkedReturnsCount = SalesReturn
+      ? await SalesReturn.countDocuments({ invoiceId: req.params.id }).session(session)
+      : 0;
+
+    if (linkedReturnsCount === 0) {
+      // No return exists — safe to restore inventory
+      await restoreInventoryFromInvoiceItems(
+        Inventory,
+        invoice.items.map((it: any) => ({
+          productId: it.productId,
+          netWeight: it.netWeight,
+          qty: it.qty,
+        })),
+        session,
+        StockLedger,
+        invoice.number
+      );
+    }
+    // else: return already restored inventory — skip to avoid double-adding stock
 
     await Invoice.findByIdAndDelete(req.params.id).session(session);
+
+    // Remove linked sales return records (paperwork only — inventory already handled above)
+    if (SalesReturn) {
+      await SalesReturn.deleteMany({ invoiceId: req.params.id }).session(session);
+    }
+
     await session.commitTransaction();
-    res.json({ message: 'Invoice deleted and inventory restored' });
+    res.json({
+      message: linkedReturnsCount > 0
+        ? 'Invoice deleted. Inventory unchanged (already restored by sales return).'
+        : 'Invoice deleted and inventory restored.',
+    });
   } catch (error: any) {
     await session.abortTransaction();
     console.error('[DELETE /invoices] failed:', error.message);
