@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
+import mongoose from 'mongoose';
 import { connectMaster, getMasterConnection } from './config/masterDb';
 import { errorHandler, corsMiddleware } from './middleware/errorHandler';
 import { getTenantContext } from './config/tenantDb';
@@ -110,14 +111,33 @@ app.get('/api/public/inventory-item/:dbName/:inventoryId', async (req, res) => {
 app.get('/api/public/inventory-item-by-id/:inventoryId', async (req, res) => {
   try {
     const { inventoryId } = req.params;
-    const masterConn = getMasterConnection();
+    if (!inventoryId) return res.status(400).json({ error: 'Item ID is required' });
+
+    const masterConn = await connectMaster();
     const ShopModel = getShopModel(masterConn);
-    const shops = await ShopModel.find({ status: 'active' }).lean();
+    const shops = await ShopModel.find({}).lean();
+
+    const isObjId = mongoose.Types.ObjectId.isValid(inventoryId);
 
     for (const shop of shops) {
       try {
         const tenantModels = await getTenantContext(shop.dbName);
-        const item = await tenantModels.Inventory.findById(inventoryId).lean();
+        let item = null;
+        if (isObjId) {
+          item = await tenantModels.Inventory.findById(inventoryId).lean();
+        }
+        if (!item) {
+          item = await tenantModels.Inventory.findOne({
+            $or: [
+              { barcode: inventoryId },
+              { sku: inventoryId },
+              { itemCode: inventoryId },
+              { id: inventoryId },
+              { huid: inventoryId },
+            ]
+          }).lean();
+        }
+
         if (item) {
           return res.json({
             item,
@@ -129,7 +149,9 @@ app.get('/api/public/inventory-item-by-id/:inventoryId', async (req, res) => {
             },
           });
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error(`Public inventory item search error in ${shop.dbName}:`, e);
+      }
     }
 
     return res.status(404).json({ error: 'Item not found' });
@@ -142,14 +164,31 @@ app.get('/api/public/inventory-item-by-id/:inventoryId', async (req, res) => {
 app.get('/api/public/invoice/:invoiceId', async (req, res) => {
   try {
     const { invoiceId } = req.params;
-    const masterConn = getMasterConnection();
+    if (!invoiceId) return res.status(400).json({ error: 'Invoice ID is required' });
+
+    const masterConn = await connectMaster();
     const ShopModel = getShopModel(masterConn);
-    const shops = await ShopModel.find({ status: 'active' }).lean();
+    const shops = await ShopModel.find({}).lean();
+
+    const isObjId = mongoose.Types.ObjectId.isValid(invoiceId);
 
     for (const shop of shops) {
       try {
         const tenantModels = await getTenantContext(shop.dbName);
-        const inv = await tenantModels.Invoice.findById(invoiceId).lean();
+        let inv = null;
+        if (isObjId) {
+          inv = await tenantModels.Invoice.findById(invoiceId).lean();
+        }
+        if (!inv) {
+          inv = await tenantModels.Invoice.findOne({
+            $or: [
+              { number: invoiceId },
+              { number: invoiceId.toUpperCase() },
+              { id: invoiceId },
+            ]
+          }).lean();
+        }
+
         if (inv) {
           return res.json({
             invoice: inv,
@@ -163,10 +202,63 @@ app.get('/api/public/invoice/:invoiceId', async (req, res) => {
             },
           });
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error(`Public invoice search error in ${shop.dbName}:`, e);
+      }
     }
 
     return res.status(404).json({ error: 'Invoice not found' });
+  } catch (err) {
+    console.error('Public invoice error:', err);
+    return res.status(500).json({ error: 'Error fetching invoice' });
+  }
+});
+
+app.get('/api/public/invoice/:dbName/:invoiceId', async (req, res) => {
+  try {
+    const { dbName, invoiceId } = req.params;
+    if (!invoiceId || !dbName) return res.status(400).json({ error: 'DB Name & Invoice ID required' });
+
+    const tenantModels = await getTenantContext(dbName);
+    const isObjId = mongoose.Types.ObjectId.isValid(invoiceId);
+    let inv = null;
+    if (isObjId) {
+      inv = await tenantModels.Invoice.findById(invoiceId).lean();
+    }
+    if (!inv) {
+      inv = await tenantModels.Invoice.findOne({
+        $or: [
+          { number: invoiceId },
+          { number: invoiceId.toUpperCase() },
+          { id: invoiceId },
+        ]
+      }).lean();
+    }
+
+    if (!inv) {
+      return res.status(404).json({ error: 'Invoice not found' });
+    }
+
+    let shopInfo = { shopName: 'Jewellery Shop', phone: '', address: '', logoUrl: '', gstNumber: '', invoiceSettings: {} };
+    try {
+      const masterConn = await connectMaster();
+      const ShopModel = getShopModel(masterConn);
+      const shop = await ShopModel.findOne({ dbName }).lean();
+      if (shop) {
+        shopInfo = {
+          shopName: shop.shopName || 'Jewellery Shop',
+          phone: shop.phone || '',
+          address: shop.address || '',
+          logoUrl: shop.logoUrl || '',
+          gstNumber: shop.gstNumber || '',
+          invoiceSettings: shop.invoiceSettings || {},
+        };
+      }
+    } catch (e) {
+      console.error('Fetch shop info error:', e);
+    }
+
+    return res.json({ invoice: inv, shop: shopInfo });
   } catch (err) {
     console.error('Public invoice error:', err);
     return res.status(500).json({ error: 'Error fetching invoice' });

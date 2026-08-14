@@ -11,5 +11,14 @@
     "paths": {
       "@/*": ["./src/*"]
     }
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src.mongo-backup*",
+    "src.*",
+    "**/postgres.ts",
+    "src/config/postgres.ts",
+    "src/utils/db.ts"
+  ]
 }
