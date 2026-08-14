@@ -37,6 +37,7 @@ export interface IInvoice extends Document {
   oldGoldAmount: number;
   oldSilverAmount?: number;
   oldMetalType?: 'Gold' | 'Silver' | 'Mixed';
+  billMetal?: 'Gold' | 'Silver';
   paymentMode: 'Cash' | 'UPI' | 'Card' | 'EMI';
   subtotal: number;
   gstAmount: number;
@@ -89,6 +90,7 @@ const invoiceSchema = new Schema<IInvoice>(
     oldGoldAmount: { type: Number, required: true, default: 0 },
     oldSilverAmount: { type: Number, default: 0 },
     oldMetalType: { type: String, enum: ['Gold', 'Silver', 'Mixed'], default: 'Gold' },
+    billMetal: { type: String, enum: ['Gold', 'Silver'], default: 'Gold' },
     paymentMode: { type: String, enum: ['Cash', 'UPI', 'Card', 'EMI'], required: true },
     subtotal: { type: Number, required: true },
     gstAmount: { type: Number, required: true },
