@@ -1,5 +1,26 @@
 import { Schema, Connection, Model, Document } from 'mongoose';
 
+export interface IPurchaseItem {
+  name: string;
+  category?: string;
+  metal?: string;
+  purity?: string;
+  huid?: string;
+  barcode?: string;
+  pcs?: number;
+  grossWeight: number;
+  lessWeight?: number;
+  netWeight: number;
+  hmc?: number;
+  ratePerGram: number;
+  makingChargeType?: 'per_gram' | 'percentage' | 'fixed';
+  makingCharge?: number;
+  makingChargePct?: number;
+  total: number;
+  hsnCode?: string;
+  note?: string;
+}
+
 export interface IPurchases extends Document {
   billNo: string;
   date: string;
@@ -31,9 +52,34 @@ export interface IPurchases extends Document {
   customerId?: string;
   customerName?: string;
   deductionPct?: number;
+  items?: IPurchaseItem[];
   createdAt: Date;
   updatedAt: Date;
 }
+
+const purchaseItemSchema = new Schema<IPurchaseItem>(
+  {
+    name: { type: String, required: true, default: 'Jewellery Item' },
+    category: { type: String, default: 'Gold' },
+    metal: { type: String, default: 'Gold' },
+    purity: { type: String, default: '22K' },
+    huid: { type: String },
+    barcode: { type: String },
+    pcs: { type: Number, default: 1 },
+    grossWeight: { type: Number, default: 0 },
+    lessWeight: { type: Number, default: 0 },
+    netWeight: { type: Number, default: 0 },
+    hmc: { type: Number, default: 0 },
+    ratePerGram: { type: Number, default: 0 },
+    makingChargeType: { type: String, enum: ['per_gram', 'percentage', 'fixed'], default: 'fixed' },
+    makingCharge: { type: Number, default: 0 },
+    makingChargePct: { type: Number, default: 0 },
+    total: { type: Number, default: 0 },
+    hsnCode: { type: String },
+    note: { type: String },
+  },
+  { _id: false }
+);
 
 const purchasesSchema = new Schema<IPurchases>(
   {
@@ -67,6 +113,7 @@ const purchasesSchema = new Schema<IPurchases>(
     customerId: { type: String },
     customerName: { type: String },
     deductionPct: { type: Number },
+    items: [purchaseItemSchema],
   },
   { timestamps: true }
 );
