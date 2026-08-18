@@ -38,7 +38,7 @@ export interface IInvoice extends Document {
   oldSilverAmount?: number;
   oldMetalType?: 'Gold' | 'Silver' | 'Mixed';
   billMetal?: 'Gold' | 'Silver';
-  paymentMode: 'Cash' | 'UPI' | 'Card' | 'EMI';
+  paymentMode: 'Cash' | 'UPI' | 'Card' | 'EMI' | 'Pending';
   subtotal: number;
   gstAmount: number;
   total: number;
@@ -53,7 +53,7 @@ export interface IInvoice extends Document {
 }
 
 const invoiceItemSchema = new Schema<IInvoiceItem>({
-  productId: { type: String, required: true },
+  productId: { type: String, required: true, default: 'manual' },
   name: { type: String, required: true },
   purity: { type: String },
   netWeight: { type: Number, required: true },
@@ -64,8 +64,8 @@ const invoiceItemSchema = new Schema<IInvoiceItem>({
   makingChargePct: { type: Number },
   makingChargeType: { type: String, enum: ['PERCENTAGE', 'PER_GRAM', 'FIXED', 'PER_PIECE'] },
   makingChargeValue: { type: Number },
-  stoneCharge: { type: Number, required: true },
-  gstPct: { type: Number, required: true },
+  stoneCharge: { type: Number, required: true, default: 0 },
+  gstPct: { type: Number, required: true, default: 0 },
   qty: { type: Number, required: true },
   huid: { type: String },
   hmc: { type: Number },
@@ -91,7 +91,7 @@ const invoiceSchema = new Schema<IInvoice>(
     oldSilverAmount: { type: Number, default: 0 },
     oldMetalType: { type: String, enum: ['Gold', 'Silver', 'Mixed'], default: 'Gold' },
     billMetal: { type: String, enum: ['Gold', 'Silver'], default: 'Gold' },
-    paymentMode: { type: String, enum: ['Cash', 'UPI', 'Card', 'EMI'], required: true },
+    paymentMode: { type: String, enum: ['Cash', 'UPI', 'Card', 'EMI', 'Pending'], required: true },
     subtotal: { type: Number, required: true },
     gstAmount: { type: Number, required: true },
     total: { type: Number, required: true },
