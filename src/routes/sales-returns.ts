@@ -6,9 +6,22 @@ import { ISalesReturn } from '../models/tenant/SalesReturn';
 
 const router = Router();
 
+function isManualOrNonInventoryId(productId: string): boolean {
+  if (!productId || typeof productId !== 'string') return true;
+  const lower = productId.toLowerCase().trim();
+  return (
+    lower === '' ||
+    lower.startsWith('manual') ||
+    lower.startsWith('linked') ||
+    lower.startsWith('custom') ||
+    lower === 'none' ||
+    lower === 'null'
+  );
+}
+
 function normalizeProductId(productId: string) {
   if (!productId || typeof productId !== 'string') return productId;
-  if (productId.startsWith('manual-')) return productId;
+  if (isManualOrNonInventoryId(productId)) return productId;
   if (productId.includes('__GW_')) {
     return productId.split('__GW_')[0];
   }
@@ -32,8 +45,13 @@ async function findInventoryItem(
   itemName: string,
   session: any,
 ) {
-  const normalizedProductId = normalizeProductId(productId || '');
-  if (!normalizedProductId || normalizedProductId.startsWith('manual')) {
+  const rawProductId = productId || '';
+  if (isManualOrNonInventoryId(rawProductId)) {
+    return null;
+  }
+
+  const normalizedProductId = normalizeProductId(rawProductId);
+  if (isManualOrNonInventoryId(normalizedProductId)) {
     return null;
   }
 
@@ -262,13 +280,46 @@ router.post('/', requireTenantAuth(['owner', 'operator']), async (req: Request, 
         returnNo
       );
 
-      // 2. Adjust Dues on Invoice if requested
-      if (body.invoiceId && body.refundMode === 'Adjust Dues' && body.totalRefund > 0) {
-        const inv = await Invoice.findById(body.invoiceId).session(session);
-        if (inv) {
-          const currentDue = inv.balanceDue || 0;
-          inv.balanceDue = Math.max(0, currentDue - body.totalRefund);
-          await inv.save({ session });
+      // 2. Adjust Dues on Invoice and Customer
+      if (body.totalRefund && body.totalRefund > 0) {
+        let remainingRefund = body.totalRefund;
+
+        if (body.invoiceId) {
+          const inv = await Invoice.findById(body.invoiceId).session(session);
+          if (inv) {
+            const currentDue = inv.balanceDue || 0;
+            const appliedDeduct = Math.min(currentDue, remainingRefund);
+            const newDue = Math.max(0, currentDue - remainingRefund);
+            inv.balanceDue = newDue;
+            if (newDue <= 0) {
+              inv.isPaid = true;
+            }
+            await inv.save({ session });
+            remainingRefund = Math.max(0, remainingRefund - appliedDeduct);
+          }
+        }
+
+        if (remainingRefund > 0 && (body.customerId || savedReturn.customerId)) {
+          const custId = body.customerId || savedReturn.customerId;
+          const openInvoices = await Invoice.find({
+            customerId: custId,
+            balanceDue: { $gt: 0 }
+          }).session(session);
+
+          for (const openInv of openInvoices) {
+            if (remainingRefund <= 0) break;
+            const cDue = openInv.balanceDue || 0;
+            if (cDue > 0) {
+              const deduct = Math.min(cDue, remainingRefund);
+              const nDue = cDue - deduct;
+              openInv.balanceDue = nDue;
+              if (nDue <= 0) {
+                openInv.isPaid = true;
+              }
+              await openInv.save({ session });
+              remainingRefund -= deduct;
+            }
+          }
         }
       }
 
@@ -296,16 +347,28 @@ router.post('/', requireTenantAuth(['owner', 'operator']), async (req: Request, 
 });
 
 router.delete('/:id', requireTenantAuth(['owner', 'operator']), async (req: Request, res: Response) => {
-  const { SalesReturn } = req.tenant!.models;
+  const { SalesReturn, Invoice } = req.tenant!.models;
   try {
-    const salesReturn = await SalesReturn.findByIdAndDelete(req.params.id);
+    const salesReturn = await SalesReturn.findById(req.params.id);
     if (!salesReturn) {
       return res.status(404).json({ error: 'Sales return not found' });
     }
-    // NOTE: Inventory is NOT adjusted on return deletion.
-    // When a return was created, stock was already restored to inventory.
-    // Deleting the return record only removes the paperwork — physical items remain in stock.
-    res.json({ message: 'Sales return record deleted. Inventory unchanged.' });
+
+    if (salesReturn.invoiceId) {
+      const inv = await Invoice.findById(salesReturn.invoiceId);
+      if (inv) {
+        (inv as any).isReturned = false;
+        if (salesReturn.totalRefund && salesReturn.totalRefund > 0) {
+          const restoredDue = (inv.balanceDue || 0) + salesReturn.totalRefund;
+          inv.balanceDue = restoredDue;
+          inv.isPaid = restoredDue <= 0;
+          await inv.save();
+        }
+      }
+    }
+
+    await SalesReturn.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Sales return record deleted and dues updated.' });
   } catch (error: any) {
     console.error('[DELETE /sales-returns] failed:', error.message);
     res.status(400).json({ error: error?.message || 'Failed to delete sales return' });

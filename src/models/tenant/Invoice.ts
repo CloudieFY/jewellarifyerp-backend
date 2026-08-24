@@ -36,9 +36,26 @@ export interface IInvoice extends Document {
   discount: number;
   oldGoldAmount: number;
   oldSilverAmount?: number;
+  oldExchangeType?: string;
+  oldGoldDetails?: {
+    grossWeight?: number;
+    lossWeight?: number;
+    netWeight?: number;
+    purityPct?: number;
+    scrapRate?: number;
+    amount?: number;
+  };
+  oldSilverDetails?: {
+    grossWeight?: number;
+    lossWeight?: number;
+    netWeight?: number;
+    purityPct?: number;
+    scrapRate?: number;
+    amount?: number;
+  };
   oldMetalType?: 'Gold' | 'Silver' | 'Mixed';
   billMetal?: 'Gold' | 'Silver';
-  paymentMode: 'Cash' | 'UPI' | 'Card' | 'EMI' | 'Pending';
+  paymentMode: 'Cash' | 'UPI' | 'Card' | 'EMI';
   subtotal: number;
   gstAmount: number;
   total: number;
@@ -53,7 +70,7 @@ export interface IInvoice extends Document {
 }
 
 const invoiceItemSchema = new Schema<IInvoiceItem>({
-  productId: { type: String, required: true, default: 'manual' },
+  productId: { type: String, required: true },
   name: { type: String, required: true },
   purity: { type: String },
   netWeight: { type: Number, required: true },
@@ -64,8 +81,8 @@ const invoiceItemSchema = new Schema<IInvoiceItem>({
   makingChargePct: { type: Number },
   makingChargeType: { type: String, enum: ['PERCENTAGE', 'PER_GRAM', 'FIXED', 'PER_PIECE'] },
   makingChargeValue: { type: Number },
-  stoneCharge: { type: Number, required: true, default: 0 },
-  gstPct: { type: Number, required: true, default: 0 },
+  stoneCharge: { type: Number, required: true },
+  gstPct: { type: Number, required: true },
   qty: { type: Number, required: true },
   huid: { type: String },
   hmc: { type: Number },
@@ -89,9 +106,26 @@ const invoiceSchema = new Schema<IInvoice>(
     discount: { type: Number, required: true, default: 0 },
     oldGoldAmount: { type: Number, required: true, default: 0 },
     oldSilverAmount: { type: Number, default: 0 },
+    oldExchangeType: { type: String },
+    oldGoldDetails: {
+      grossWeight: { type: Number },
+      lossWeight: { type: Number },
+      netWeight: { type: Number },
+      purityPct: { type: Number },
+      scrapRate: { type: Number },
+      amount: { type: Number },
+    },
+    oldSilverDetails: {
+      grossWeight: { type: Number },
+      lossWeight: { type: Number },
+      netWeight: { type: Number },
+      purityPct: { type: Number },
+      scrapRate: { type: Number },
+      amount: { type: Number },
+    },
     oldMetalType: { type: String, enum: ['Gold', 'Silver', 'Mixed'], default: 'Gold' },
     billMetal: { type: String, enum: ['Gold', 'Silver'], default: 'Gold' },
-    paymentMode: { type: String, enum: ['Cash', 'UPI', 'Card', 'EMI', 'Pending'], required: true },
+    paymentMode: { type: String, required: true },
     subtotal: { type: Number, required: true },
     gstAmount: { type: Number, required: true },
     total: { type: Number, required: true },

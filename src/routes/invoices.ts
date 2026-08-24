@@ -6,9 +6,22 @@ import { IInvoice } from '../models/tenant/Invoice';
 
 const router = Router();
 
+function isManualOrNonInventoryId(productId: string): boolean {
+  if (!productId || typeof productId !== 'string') return true;
+  const lower = productId.toLowerCase().trim();
+  return (
+    lower === '' ||
+    lower.startsWith('manual') ||
+    lower.startsWith('linked') ||
+    lower.startsWith('custom') ||
+    lower === 'none' ||
+    lower === 'null'
+  );
+}
+
 function normalizeInvoiceProductId(productId: string) {
   if (!productId || typeof productId !== 'string') return productId;
-  if (productId.startsWith('manual-')) return productId;
+  if (isManualOrNonInventoryId(productId)) return productId;
   if (productId.includes('__GW_')) {
     return productId.split('__GW_')[0];
   }
@@ -27,14 +40,37 @@ function parseGrossWeightFromProductId(productId: string): number {
   }
 }
 
+function isManualInvoicePayload(body: any): boolean {
+  if (!body) return false;
+  if (typeof body.number === 'string' && body.number.toUpperCase().startsWith('MAN-')) {
+    return true;
+  }
+  if (Array.isArray(body.items) && body.items.some((it: any) => 
+    it.productId === 'MANUAL_DUE_ENTRY' ||
+    (typeof it.productId === 'string' && it.productId.toLowerCase().startsWith('manual'))
+  )) {
+    return true;
+  }
+  return false;
+}
+
 async function getNextInvoiceNumber(
   InvoiceModel: Model<IInvoice>,
   type: 'GST' | 'NON-GST',
   session: any,
+  isManual: boolean = false,
 ) {
-  const prefix = type === 'GST' ? 'GST-' : 'INV-';
-  const regex = type === 'GST' ? /^GST-(\d+)$/ : /^INV-(\d+)$/;
-  const invoices = await InvoiceModel.find({ type }).select('number').session(session).lean();
+  let prefix = 'INV-';
+  let regex = /^INV-(\d+)$/;
+  if (isManual) {
+    prefix = 'MAN-';
+    regex = /^MAN-(\d+)$/;
+  } else if (type === 'GST') {
+    prefix = 'GST-';
+    regex = /^GST-(\d+)$/;
+  }
+
+  const invoices = await InvoiceModel.find().select('number').session(session).lean();
 
   const used = new Set<number>();
   for (const invoice of invoices) {
@@ -60,8 +96,13 @@ async function applyInventoryDeductionFromInvoiceItems(
   refNo?: string,
 ) {
   for (const item of invoiceItems) {
-    const normalizedProductId = normalizeInvoiceProductId(item.productId || "");
-    if (!normalizedProductId || normalizedProductId.startsWith('manual')) {
+    const rawProductId = item.productId || "";
+    if (isManualOrNonInventoryId(rawProductId)) {
+      continue;
+    }
+
+    const normalizedProductId = normalizeInvoiceProductId(rawProductId);
+    if (isManualOrNonInventoryId(normalizedProductId)) {
       continue;
     }
 
@@ -80,6 +121,12 @@ async function applyInventoryDeductionFromInvoiceItems(
       } catch {
         // ignore
       }
+    }
+    if (!inventory) {
+      inventory = await InventoryModel.findOne({ barcode: normalizedProductId }).session(session);
+    }
+    if (!inventory) {
+      inventory = await InventoryModel.findOne({ itemCode: normalizedProductId }).session(session);
     }
 
     if (!inventory) {
@@ -141,8 +188,13 @@ async function restoreInventoryFromInvoiceItems(
   refNo?: string,
 ) {
   for (const item of invoiceItems) {
-    const normalizedProductId = normalizeInvoiceProductId(item.productId || "");
-    if (!normalizedProductId || normalizedProductId.startsWith('manual')) {
+    const rawProductId = item.productId || "";
+    if (isManualOrNonInventoryId(rawProductId)) {
+      continue;
+    }
+
+    const normalizedProductId = normalizeInvoiceProductId(rawProductId);
+    if (isManualOrNonInventoryId(normalizedProductId)) {
       continue;
     }
 
@@ -161,6 +213,12 @@ async function restoreInventoryFromInvoiceItems(
       } catch {
         // ignore
       }
+    }
+    if (!inventory) {
+      inventory = await InventoryModel.findOne({ barcode: normalizedProductId }).session(session);
+    }
+    if (!inventory) {
+      inventory = await InventoryModel.findOne({ itemCode: normalizedProductId }).session(session);
     }
     if (!inventory) continue; // skip if not found during restoration
 
@@ -234,6 +292,7 @@ router.post('/', requireTenantAuth(['owner', 'operator']), async (req: Request, 
     try {
       session.startTransaction();
       const body = { ...req.body } as any;
+      const isManual = isManualInvoicePayload(body);
       delete body.id;
       delete body._id;
       delete body.number;
@@ -242,7 +301,7 @@ router.post('/', requireTenantAuth(['owner', 'operator']), async (req: Request, 
         body.createdAt = new Date(body.createdAt);
       }
 
-      const invoiceNumber = await getNextInvoiceNumber(Invoice, body.type, session);
+      const invoiceNumber = await getNextInvoiceNumber(Invoice, body.type, session, isManual);
       const invoice = new Invoice({ ...body, number: invoiceNumber });
       if (body.createdAt) {
         invoice.createdAt = new Date(body.createdAt);
