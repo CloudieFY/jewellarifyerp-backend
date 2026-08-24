@@ -61,6 +61,8 @@ export interface IInvoice extends Document {
   total: number;
   amountPaid?: number;
   balanceDue?: number;
+  isPaid?: boolean;
+  isReturned?: boolean;
   payments: IInvoicePayment[];
   customerAddress?: string;
   customerSignature?: string;
@@ -131,6 +133,8 @@ const invoiceSchema = new Schema<IInvoice>(
     total: { type: Number, required: true },
     amountPaid: { type: Number },
     balanceDue: { type: Number },
+    isPaid: { type: Boolean, default: false },
+    isReturned: { type: Boolean, default: false },
     payments: { type: [invoicePaymentSchema], default: [] },
     customerAddress: { type: String },
     customerSignature: { type: String },
