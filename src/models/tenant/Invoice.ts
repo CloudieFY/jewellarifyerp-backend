@@ -28,6 +28,7 @@ interface IInvoicePayment {
 
 export interface IInvoice extends Document {
   number: string;
+  billNo?: string;
   type: 'GST' | 'NON-GST';
   customerId?: string;
   customerName: string;
@@ -100,6 +101,7 @@ const invoicePaymentSchema = new Schema<IInvoicePayment>({
 const invoiceSchema = new Schema<IInvoice>(
   {
     number: { type: String, required: true, unique: true },
+    billNo: { type: String },
     type: { type: String, enum: ['GST', 'NON-GST'], required: true },
     customerId: { type: String },
     customerName: { type: String, required: true },

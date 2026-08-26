@@ -70,13 +70,26 @@ async function getNextInvoiceNumber(
     regex = /^GST-(\d+)$/;
   }
 
-  const invoices = await InvoiceModel.find().select('number').session(session).lean();
+  const invoices = await InvoiceModel.find().select('number billNo type').session(session).lean();
 
   const used = new Set<number>();
   for (const invoice of invoices) {
-    const match = typeof invoice.number === 'string' ? invoice.number.match(regex) : null;
-    if (match) {
-      used.add(Number(match[1]));
+    if (invoice.type !== type && !isManual) continue;
+
+    let numVal: number | null = null;
+    if (typeof (invoice as any).billNo === 'string' && /^\d+$/.test((invoice as any).billNo.trim())) {
+      numVal = Number((invoice as any).billNo.trim());
+    } else if (typeof invoice.number === 'string') {
+      const match = invoice.number.match(regex);
+      if (match) {
+        numVal = Number(match[1]);
+      } else {
+        const clean = invoice.number.replace(/\D/g, '');
+        if (clean) numVal = Number(clean);
+      }
+    }
+    if (numVal && numVal > 0) {
+      used.add(numVal);
     }
   }
 
@@ -295,13 +308,16 @@ router.post('/', requireTenantAuth(['owner', 'operator']), async (req: Request, 
       const isManual = isManualInvoicePayload(body);
       delete body.id;
       delete body._id;
-      delete body.number;
 
       if (body.createdAt) {
         body.createdAt = new Date(body.createdAt);
       }
 
-      const invoiceNumber = await getNextInvoiceNumber(Invoice, body.type, session, isManual);
+      let invoiceNumber = typeof body.number === 'string' && body.number.trim() ? body.number.trim() : null;
+      if (!invoiceNumber) {
+        invoiceNumber = await getNextInvoiceNumber(Invoice, body.type, session, isManual);
+      }
+
       const invoice = new Invoice({ ...body, number: invoiceNumber });
       if (body.createdAt) {
         invoice.createdAt = new Date(body.createdAt);
@@ -359,7 +375,12 @@ router.put('/:id', requireTenantAuth(['owner', 'operator']), async (req: Request
     const updateData = { ...req.body };
     delete updateData.id;
     delete updateData._id;
-    delete updateData.number; // never change invoice number on edit
+
+    if (!updateData.number || typeof updateData.number !== 'string' || !updateData.number.trim()) {
+      delete updateData.number;
+    } else {
+      updateData.number = updateData.number.trim();
+    }
 
     if (updateData.createdAt) {
       updateData.createdAt = new Date(updateData.createdAt);
