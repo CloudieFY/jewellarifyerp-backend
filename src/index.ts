@@ -1,9 +1,9 @@
 import 'dotenv/config';
 import express from 'express';
 import mongoose from 'mongoose';
-import { connectMaster, getMasterConnection } from './config/masterDb';
+import { connectMaster, getMasterConnection, closeMasterConnection } from './config/masterDb';
 import { errorHandler, corsMiddleware } from './middleware/errorHandler';
-import { getTenantContext } from './config/tenantDb';
+import { getTenantContext, closeAllTenantConnections } from './config/tenantDb';
 import { getShopModel } from './models/master/Shop';
 
 import superAdminRouter from './routes/superAdmin';
@@ -305,10 +305,44 @@ const PORT = process.env.PORT || 3006;
 async function start() {
   try {
     await connectMaster();
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
       console.log(`\n✅ JewelShop SaaS backend running on port ${PORT}`);
       console.log(`   Health check: http://localhost:${PORT}/health`);
     });
+
+    let shuttingDown = false;
+    const shutdown = (signal: string) => {
+      if (shuttingDown) return;
+      shuttingDown = true;
+      console.log(`\n[Shutdown] ${signal} received, closing server and MongoDB connections...`);
+
+      // Stop accepting new connections, then wait for active requests to drain.
+      server.close(async () => {
+        try {
+          await Promise.all([closeAllTenantConnections(), closeMasterConnection()]);
+          console.log('[Shutdown] All MongoDB connections closed. Exiting.');
+          process.exit(0);
+        } catch (err) {
+          console.error('[Shutdown] Error while closing MongoDB connections:', err);
+          process.exit(1);
+        }
+      });
+
+      // Immediately drop idle HTTP keep-alive connections so server.close()
+      // can fire once in-flight requests finish, instead of waiting for
+      // idle sockets to time out. Active requests are left to drain.
+      server.closeIdleConnections();
+
+      // Safety net in case something (e.g. a slow in-flight request) keeps
+      // the HTTP server from closing promptly.
+      setTimeout(() => {
+        console.warn('[Shutdown] Forcing exit after timeout.');
+        process.exit(1);
+      }, 10000).unref();
+    };
+
+    process.on('SIGTERM', () => shutdown('SIGTERM'));
+    process.on('SIGINT', () => shutdown('SIGINT'));
   } catch (err) {
     console.error('Failed to start server:', err);
     process.exit(1);

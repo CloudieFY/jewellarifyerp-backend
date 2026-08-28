@@ -10,6 +10,19 @@ import 'dotenv/config';
  */
 
 let masterConn: mongoose.Connection | null = null;
+// In-flight master connection attempt, so concurrent early callers (e.g. the
+// first burst of requests at startup) coalesce onto a single
+// createConnection() instead of racing to create duplicates.
+let masterConnPromise: Promise<mongoose.Connection> | null = null;
+
+function intFromEnv(name: string, fallback: number): number {
+  const raw = process.env[name];
+  if (!raw) return fallback;
+  const parsed = parseInt(raw, 10);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+}
+
+const MASTER_MAX_POOL_SIZE = intFromEnv('MONGO_MASTER_MAX_POOL_SIZE', 5);
 
 function getBaseUri(): string {
   const base = process.env.MONGODB_BASE_URI;
@@ -60,21 +73,26 @@ export function buildDbUri(dbName: string): string {
   return uri;
 }
 
-export async function connectMaster(): Promise<mongoose.Connection> {
-  if (masterConn && masterConn.readyState === 1) {
-    return masterConn;
-  }
-
+async function createMasterConnection(): Promise<mongoose.Connection> {
   const uri = buildDbUri(getMasterDbName());
   const conn = mongoose.createConnection(uri, {
-    maxPoolSize: 10,
+    maxPoolSize: MASTER_MAX_POOL_SIZE,
     serverSelectionTimeoutMS: 8000,
   });
 
-  await new Promise<void>((resolve, reject) => {
-    conn.once('open', () => resolve());
-    conn.once('error', (err) => reject(err));
-  });
+  try {
+    await new Promise<void>((resolve, reject) => {
+      conn.once('open', () => resolve());
+      conn.once('error', (err) => reject(err));
+    });
+  } catch (err) {
+    try {
+      await conn.close();
+    } catch (closeErr) {
+      console.error('[Master DB] error closing failed connection:', closeErr);
+    }
+    throw err;
+  }
 
   conn.on('disconnected', () => {
     console.warn('[Master DB] disconnected. Mongoose will attempt to reconnect.');
@@ -84,8 +102,33 @@ export async function connectMaster(): Promise<mongoose.Connection> {
   });
 
   console.log(`[Master DB] connected -> ${getMasterDbName()}`);
-  masterConn = conn;
   return conn;
+}
+
+export async function connectMaster(): Promise<mongoose.Connection> {
+  if (masterConn && masterConn.readyState === 1) {
+    return masterConn;
+  }
+
+  if (masterConnPromise) {
+    return masterConnPromise;
+  }
+
+  if (masterConn && masterConn.readyState !== 1) {
+    console.warn(`[Master DB] cached connection unhealthy (readyState=${masterConn.readyState}), recreating.`);
+    masterConn = null;
+  }
+
+  masterConnPromise = createMasterConnection()
+    .then((conn) => {
+      masterConn = conn;
+      return conn;
+    })
+    .finally(() => {
+      masterConnPromise = null;
+    });
+
+  return masterConnPromise;
 }
 
 export function getMasterConnection(): mongoose.Connection {
@@ -93,4 +136,21 @@ export function getMasterConnection(): mongoose.Connection {
     throw new Error('Master DB connection has not been initialized yet. Call connectMaster() first.');
   }
   return masterConn;
+}
+
+/**
+ * Closes the master connection. Intended for use during graceful process
+ * shutdown (SIGTERM/SIGINT).
+ */
+export async function closeMasterConnection(): Promise<void> {
+  const conn = masterConn;
+  masterConn = null;
+  if (conn) {
+    try {
+      await conn.close();
+      console.log('[Master DB] connection closed (shutdown).');
+    } catch (err) {
+      console.error('[Master DB] error closing connection (shutdown):', err);
+    }
+  }
 }
