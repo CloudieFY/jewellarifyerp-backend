@@ -26,7 +26,10 @@ export const corsMiddleware = cors({
     if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-    callback(new Error(`CORS blocked for origin: ${origin}`));
+    // Disallowed origin: respond WITHOUT CORS headers (the browser then blocks
+    // the response client-side). Do NOT pass an Error here — that turns every
+    // cross-origin probe into a 500 + a logged stack trace.
+    callback(null, false);
   },
   credentials: true,
 });
