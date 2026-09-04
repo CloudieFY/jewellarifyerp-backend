@@ -1,0 +1,1402 @@
+{
+  "generatedAt": "2026-08-15T13:32:43.665Z",
+  "note": "Analysis only. No INSERT/UPDATE/DELETE was performed against MongoDB or PostgreSQL.",
+  "summary": {
+    "A_SAFE_AFTER_MANUAL_MAPPING": 1,
+    "B_SAFE_AFTER_HISTORICAL_RECONCILIATION": 0,
+    "C_DUPLICATE_COLLISION": 4,
+    "D_HISTORICAL_DATA_ANOMALY": 1,
+    "E_MISSING_POSTGRES_INVENTORY": 1,
+    "totalGroups": 7,
+    "totalRecordsCovered": 52
+  },
+  "groups": [
+    {
+      "shop": "demo",
+      "shopId": "6a718b3b4dc2277b0539b1e0",
+      "mongoItemId": "6a7b1e46e3c7d4b1d4c2a86d",
+      "mongoItemCode": "6a7b1e46e3c7d4b1d4c2a86d",
+      "mongoItemName": "cada",
+      "pgCandidates": [
+        {
+          "id": "a75c42cc-cb81-4e3c-904a-0063008cac59",
+          "name": "cada",
+          "barcode": null,
+          "currentStock": 10,
+          "currentGrossWeight": 90,
+          "currentNetWeight": 80
+        }
+      ],
+      "mongoLedgerRecordCount": 38,
+      "distinctReferenceNumbers": [
+        "INV-0003",
+        "SR-0001",
+        "INV-0004",
+        "SR-0002",
+        "SR-0003",
+        "SR-0004",
+        "SR-0005",
+        "SR-0007",
+        "INV-0003 (edit-restore)",
+        "INV-0003 (edit)"
+      ],
+      "distinctTransactionTypes": [
+        "SALE",
+        "RETURN"
+      ],
+      "mongoFinalBalance": {
+        "qty": 10,
+        "gross": 100,
+        "net": 90
+      },
+      "mongoFinalBalanceAsOf": "6a7c2062d12740b5da898320",
+      "chainSelfConsistency": {
+        "consistent": false,
+        "breakCount": 9,
+        "breaks": [
+          {
+            "afterMongoLedgerId": "6a7b1f0ae3c7d4b1d4c2a89f",
+            "atMongoLedgerId": "6a7b209ce3c7d4b1d4c2a8f4",
+            "expected": {
+              "qty": 5,
+              "gross": 50,
+              "net": 45
+            },
+            "actual": {
+              "qty": 5,
+              "gross": 55,
+              "net": 45
+            },
+            "qtyOk": true,
+            "grossOk": false,
+            "netOk": true
+          },
+          {
+            "afterMongoLedgerId": "6a7b20cbe3c7d4b1d4c2a915",
+            "atMongoLedgerId": "6a7b2125e3c7d4b1d4c2a93b",
+            "expected": {
+              "qty": 5,
+              "gross": 55,
+              "net": 45
+            },
+            "actual": {
+              "qty": 5,
+              "gross": 50,
+              "net": 45
+            },
+            "qtyOk": true,
+            "grossOk": false,
+            "netOk": true
+          },
+          {
+            "afterMongoLedgerId": "6a7b3300da5b517695d33a85",
+            "atMongoLedgerId": "6a7b3383da5b517695d33aa8",
+            "expected": {
+              "qty": 11,
+              "gross": 108,
+              "net": 99
+            },
+            "actual": {
+              "qty": 9,
+              "gross": 90,
+              "net": 81
+            },
+            "qtyOk": false,
+            "grossOk": false,
+            "netOk": false
+          },
+          {
+            "afterMongoLedgerId": "6a7b35dd8a7496a236da1415",
+            "atMongoLedgerId": "6a7b36fde6d5faabcbdb0acd",
+            "expected": {
+              "qty": 10,
+              "gross": 99,
+              "net": 90
+            },
+            "actual": {
+              "qty": 9,
+              "gross": 90,
+              "net": 81
+            },
+            "qtyOk": false,
+            "grossOk": false,
+            "netOk": false
+          },
+          {
+            "afterMongoLedgerId": "6a7b3759e6d5faabcbdb0b0f",
+            "atMongoLedgerId": "6a7b3949e6d5faabcbdb0b74",
+            "expected": {
+              "qty": 10,
+              "gross": 100,
+              "net": 90
+            },
+            "actual": {
+              "qty": 9,
+              "gross": 90,
+              "net": 81
+            },
+            "qtyOk": false,
+            "grossOk": false,
+            "netOk": false
+          },
+          {
+            "afterMongoLedgerId": "6a7b398ee6d5faabcbdb0ba1",
+            "atMongoLedgerId": "6a7b3aaab42599cb4d75be8a",
+            "expected": {
+              "qty": 10,
+              "gross": 100,
+              "net": 90
+            },
+            "actual": {
+              "qty": 9,
+              "gross": 90,
+              "net": 81
+            },
+            "qtyOk": false,
+            "grossOk": false,
+            "netOk": false
+          },
+          {
+            "afterMongoLedgerId": "6a7b3aeab42599cb4d75bec8",
+            "atMongoLedgerId": "6a7b3c67b42599cb4d75bf34",
+            "expected": {
+              "qty": 10,
+              "gross": 100,
+              "net": 90
+            },
+            "actual": {
+              "qty": 9,
+              "gross": 90,
+              "net": 81
+            },
+            "qtyOk": false,
+            "grossOk": false,
+            "netOk": false
+          },
+          {
+            "afterMongoLedgerId": "6a7b3cc4b42599cb4d75bf70",
+            "atMongoLedgerId": "6a7c18dfce89f3acbaf14105",
+            "expected": {
+              "qty": 10,
+              "gross": 10,
+              "net": 9
+            },
+            "actual": {
+              "qty": 9,
+              "gross": 0,
+              "net": 0
+            },
+            "qtyOk": false,
+            "grossOk": false,
+            "netOk": false
+          },
+          {
+            "afterMongoLedgerId": "6a7c1b59b13e645f1c48c1b8",
+            "atMongoLedgerId": "6a7c1b7fb13e645f1c48c1d4",
+            "expected": {
+              "qty": 18,
+              "gross": 0,
+              "net": 0
+            },
+            "actual": {
+              "qty": 9,
+              "gross": 0,
+              "net": 0
+            },
+            "qtyOk": false,
+            "grossOk": true,
+            "netOk": true
+          }
+        ]
+      },
+      "reviewReasons": [
+        "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)"
+      ],
+      "category": "C",
+      "categoryLabel": "DUPLICATE/COLLISION -- DO NOT MIGRATE",
+      "categoryReason": "This Mongo item resolves to the same PostgreSQL inventory row as at least one other distinct Mongo item. Migrating either would corrupt that PostgreSQL item's stock arithmetic by attributing another item's movements to it.",
+      "records": [
+        {
+          "mongoLedgerId": "6a7b1eb6e3c7d4b1d4c2a87c",
+          "referenceNo": "INV-0003",
+          "transactionType": "SALE",
+          "qtyChange": -5,
+          "grossWeightChange": -50,
+          "netWeightChange": -45,
+          "balanceQty": 5,
+          "balanceGrossWeight": 50,
+          "balanceNetWeight": 45,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)",
+          "date": "2026-08-11",
+          "createdAt": "2026-08-11T13:08:06.571Z",
+          "remarks": "Sales Invoice Stock Deduction"
+        },
+        {
+          "mongoLedgerId": "6a7b1f0ae3c7d4b1d4c2a89f",
+          "referenceNo": "SR-0001",
+          "transactionType": "RETURN",
+          "qtyChange": 5,
+          "grossWeightChange": 45,
+          "netWeightChange": 45,
+          "balanceQty": 10,
+          "balanceGrossWeight": 95,
+          "balanceNetWeight": 90,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)",
+          "date": "2026-08-11",
+          "createdAt": "2026-08-11T13:09:30.439Z",
+          "remarks": "Sales Return Stock Restoration"
+        },
+        {
+          "mongoLedgerId": "6a7b209ce3c7d4b1d4c2a8f4",
+          "referenceNo": "SR-0001",
+          "transactionType": "SALE",
+          "qtyChange": -5,
+          "grossWeightChange": -45,
+          "netWeightChange": -45,
+          "balanceQty": 5,
+          "balanceGrossWeight": 55,
+          "balanceNetWeight": 45,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)",
+          "date": "2026-08-11",
+          "createdAt": "2026-08-11T13:16:12.496Z",
+          "remarks": "Sales Return Deletion Stock Deduction"
+        },
+        {
+          "mongoLedgerId": "6a7b20cbe3c7d4b1d4c2a915",
+          "referenceNo": "INV-0003",
+          "transactionType": "RETURN",
+          "qtyChange": 5,
+          "grossWeightChange": 50,
+          "netWeightChange": 45,
+          "balanceQty": 10,
+          "balanceGrossWeight": 105,
+          "balanceNetWeight": 90,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)",
+          "date": "2026-08-11",
+          "createdAt": "2026-08-11T13:16:59.408Z",
+          "remarks": "Sales Invoice Return / Deletion"
+        },
+        {
+          "mongoLedgerId": "6a7b2125e3c7d4b1d4c2a93b",
+          "referenceNo": "INV-0003",
+          "transactionType": "SALE",
+          "qtyChange": -5,
+          "grossWeightChange": -50,
+          "netWeightChange": -45,
+          "balanceQty": 5,
+          "balanceGrossWeight": 50,
+          "balanceNetWeight": 45,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)",
+          "date": "2026-08-11",
+          "createdAt": "2026-08-11T13:18:29.790Z",
+          "remarks": "Sales Invoice Stock Deduction"
+        },
+        {
+          "mongoLedgerId": "6a7b2aa2da5b517695d3395c",
+          "referenceNo": "INV-0004",
+          "transactionType": "SALE",
+          "qtyChange": -2,
+          "grossWeightChange": -20,
+          "netWeightChange": -18,
+          "balanceQty": 3,
+          "balanceGrossWeight": 30,
+          "balanceNetWeight": 27,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)",
+          "date": "2026-08-11",
+          "createdAt": "2026-08-11T13:58:58.717Z",
+          "remarks": "Sales Invoice Stock Deduction"
+        },
+        {
+          "mongoLedgerId": "6a7b2ad3da5b517695d3397f",
+          "referenceNo": "SR-0001",
+          "transactionType": "RETURN",
+          "qtyChange": 2,
+          "grossWeightChange": 18,
+          "netWeightChange": 18,
+          "balanceQty": 5,
+          "balanceGrossWeight": 48,
+          "balanceNetWeight": 45,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)",
+          "date": "2026-08-11",
+          "createdAt": "2026-08-11T13:59:47.592Z",
+          "remarks": "Sales Return Stock Restoration"
+        },
+        {
+          "mongoLedgerId": "6a7b32e8da5b517695d33a61",
+          "referenceNo": "INV-0004",
+          "transactionType": "RETURN",
+          "qtyChange": 2,
+          "grossWeightChange": 20,
+          "netWeightChange": 18,
+          "balanceQty": 7,
+          "balanceGrossWeight": 68,
+          "balanceNetWeight": 63,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)",
+          "date": "2026-08-11",
+          "createdAt": "2026-08-11T14:34:16.284Z",
+          "remarks": "Sales Invoice Return / Deletion"
+        },
+        {
+          "mongoLedgerId": "6a7b3300da5b517695d33a85",
+          "referenceNo": "INV-0003",
+          "transactionType": "RETURN",
+          "qtyChange": 5,
+          "grossWeightChange": 50,
+          "netWeightChange": 45,
+          "balanceQty": 12,
+          "balanceGrossWeight": 118,
+          "balanceNetWeight": 108,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)",
+          "date": "2026-08-11",
+          "createdAt": "2026-08-11T14:34:40.327Z",
+          "remarks": "Sales Invoice Return / Deletion"
+        },
+        {
+          "mongoLedgerId": "6a7b3383da5b517695d33aa8",
+          "referenceNo": "INV-0003",
+          "transactionType": "SALE",
+          "qtyChange": -1,
+          "grossWeightChange": -10,
+          "netWeightChange": -9,
+          "balanceQty": 9,
+          "balanceGrossWeight": 90,
+          "balanceNetWeight": 81,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)",
+          "date": "2026-08-11",
+          "createdAt": "2026-08-11T14:36:51.392Z",
+          "remarks": "Sales Invoice Stock Deduction"
+        },
+        {
+          "mongoLedgerId": "6a7b33f9da5b517695d33acf",
+          "referenceNo": "SR-0002",
+          "transactionType": "RETURN",
+          "qtyChange": 1,
+          "grossWeightChange": 9,
+          "netWeightChange": 9,
+          "balanceQty": 10,
+          "balanceGrossWeight": 99,
+          "balanceNetWeight": 90,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)",
+          "date": "2026-08-11",
+          "createdAt": "2026-08-11T14:38:49.500Z",
+          "remarks": "Sales Return Stock Restoration"
+        },
+        {
+          "mongoLedgerId": "6a7b35dd8a7496a236da1415",
+          "referenceNo": "INV-0003",
+          "transactionType": "RETURN",
+          "qtyChange": 1,
+          "grossWeightChange": 10,
+          "netWeightChange": 9,
+          "balanceQty": 11,
+          "balanceGrossWeight": 109,
+          "balanceNetWeight": 99,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)",
+          "date": "2026-08-11",
+          "createdAt": "2026-08-11T14:46:53.878Z",
+          "remarks": "Sales Invoice Return / Deletion"
+        },
+        {
+          "mongoLedgerId": "6a7b36fde6d5faabcbdb0acd",
+          "referenceNo": "INV-0003",
+          "transactionType": "SALE",
+          "qtyChange": -1,
+          "grossWeightChange": -10,
+          "netWeightChange": -9,
+          "balanceQty": 9,
+          "balanceGrossWeight": 90,
+          "balanceNetWeight": 81,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)",
+          "date": "2026-08-11",
+          "createdAt": "2026-08-11T14:51:41.778Z",
+          "remarks": "Sales Invoice Stock Deduction"
+        },
+        {
+          "mongoLedgerId": "6a7b3735e6d5faabcbdb0aef",
+          "referenceNo": "SR-0003",
+          "transactionType": "RETURN",
+          "qtyChange": 1,
+          "grossWeightChange": 10,
+          "netWeightChange": 9,
+          "balanceQty": 10,
+          "balanceGrossWeight": 100,
+          "balanceNetWeight": 90,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)",
+          "date": "2026-08-11",
+          "createdAt": "2026-08-11T14:52:37.405Z",
+          "remarks": "Sales Return Stock Restoration"
+        },
+        {
+          "mongoLedgerId": "6a7b3759e6d5faabcbdb0b0f",
+          "referenceNo": "INV-0003",
+          "transactionType": "RETURN",
+          "qtyChange": 1,
+          "grossWeightChange": 10,
+          "netWeightChange": 9,
+          "balanceQty": 11,
+          "balanceGrossWeight": 110,
+          "balanceNetWeight": 99,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)",
+          "date": "2026-08-11",
+          "createdAt": "2026-08-11T14:53:13.381Z",
+          "remarks": "Sales Invoice Return / Deletion"
+        },
+        {
+          "mongoLedgerId": "6a7b3949e6d5faabcbdb0b74",
+          "referenceNo": "INV-0003",
+          "transactionType": "SALE",
+          "qtyChange": -1,
+          "grossWeightChange": -10,
+          "netWeightChange": -9,
+          "balanceQty": 9,
+          "balanceGrossWeight": 90,
+          "balanceNetWeight": 81,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)",
+          "date": "2026-08-11",
+          "createdAt": "2026-08-11T15:01:29.764Z",
+          "remarks": "Sales Invoice Stock Deduction"
+        },
+        {
+          "mongoLedgerId": "6a7b3966e6d5faabcbdb0b88",
+          "referenceNo": "SR-0004",
+          "transactionType": "RETURN",
+          "qtyChange": 1,
+          "grossWeightChange": 10,
+          "netWeightChange": 9,
+          "balanceQty": 10,
+          "balanceGrossWeight": 100,
+          "balanceNetWeight": 90,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)",
+          "date": "2026-08-11",
+          "createdAt": "2026-08-11T15:01:58.140Z",
+          "remarks": "Sales Return Stock Restoration"
+        },
+        {
+          "mongoLedgerId": "6a7b398ee6d5faabcbdb0ba1",
+          "referenceNo": "INV-0003",
+          "transactionType": "RETURN",
+          "qtyChange": 1,
+          "grossWeightChange": 10,
+          "netWeightChange": 9,
+          "balanceQty": 11,
+          "balanceGrossWeight": 110,
+          "balanceNetWeight": 99,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)",
+          "date": "2026-08-11",
+          "createdAt": "2026-08-11T15:02:38.550Z",
+          "remarks": "Sales Invoice Return / Deletion"
+        },
+        {
+          "mongoLedgerId": "6a7b3aaab42599cb4d75be8a",
+          "referenceNo": "INV-0003",
+          "transactionType": "SALE",
+          "qtyChange": -1,
+          "grossWeightChange": -10,
+          "netWeightChange": -9,
+          "balanceQty": 9,
+          "balanceGrossWeight": 90,
+          "balanceNetWeight": 81,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)",
+          "date": "2026-08-11",
+          "createdAt": "2026-08-11T15:07:22.702Z",
+          "remarks": "Sales Invoice Stock Deduction"
+        },
+        {
+          "mongoLedgerId": "6a7b3accb42599cb4d75be9e",
+          "referenceNo": "SR-0005",
+          "transactionType": "RETURN",
+          "qtyChange": 1,
+          "grossWeightChange": 10,
+          "netWeightChange": 9,
+          "balanceQty": 10,
+          "balanceGrossWeight": 100,
+          "balanceNetWeight": 90,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)",
+          "date": "2026-08-11",
+          "createdAt": "2026-08-11T15:07:56.966Z",
+          "remarks": "Sales Return Stock Restoration"
+        },
+        {
+          "mongoLedgerId": "6a7b3aeab42599cb4d75bec8",
+          "referenceNo": "INV-0003",
+          "transactionType": "RETURN",
+          "qtyChange": 1,
+          "grossWeightChange": 10,
+          "netWeightChange": 9,
+          "balanceQty": 11,
+          "balanceGrossWeight": 110,
+          "balanceNetWeight": 99,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)",
+          "date": "2026-08-11",
+          "createdAt": "2026-08-11T15:08:26.032Z",
+          "remarks": "Sales Invoice Return / Deletion"
+        },
+        {
+          "mongoLedgerId": "6a7b3c67b42599cb4d75bf34",
+          "referenceNo": "INV-0003",
+          "transactionType": "SALE",
+          "qtyChange": -1,
+          "grossWeightChange": -10,
+          "netWeightChange": -9,
+          "balanceQty": 9,
+          "balanceGrossWeight": 90,
+          "balanceNetWeight": 81,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)",
+          "date": "2026-08-11",
+          "createdAt": "2026-08-11T15:14:47.401Z",
+          "remarks": "Sales Invoice Stock Deduction"
+        },
+        {
+          "mongoLedgerId": "6a7b3c75b42599cb4d75bf48",
+          "referenceNo": "SR-0007",
+          "transactionType": "RETURN",
+          "qtyChange": 1,
+          "grossWeightChange": 10,
+          "netWeightChange": 9,
+          "balanceQty": 10,
+          "balanceGrossWeight": 100,
+          "balanceNetWeight": 90,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)",
+          "date": "2026-08-11",
+          "createdAt": "2026-08-11T15:15:01.228Z",
+          "remarks": "Sales Return Stock Restoration"
+        },
+        {
+          "mongoLedgerId": "6a7b3cc4b42599cb4d75bf70",
+          "referenceNo": "INV-0003",
+          "transactionType": "RETURN",
+          "qtyChange": 1,
+          "grossWeightChange": 10,
+          "netWeightChange": 9,
+          "balanceQty": 11,
+          "balanceGrossWeight": 110,
+          "balanceNetWeight": 99,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)",
+          "date": "2026-08-11",
+          "createdAt": "2026-08-11T15:16:20.796Z",
+          "remarks": "Sales Invoice Return / Deletion"
+        },
+        {
+          "mongoLedgerId": "6a7c18dfce89f3acbaf14105",
+          "referenceNo": "INV-0003",
+          "transactionType": "SALE",
+          "qtyChange": -1,
+          "grossWeightChange": -100,
+          "netWeightChange": -90,
+          "balanceQty": 9,
+          "balanceGrossWeight": 0,
+          "balanceNetWeight": 0,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)",
+          "date": "2026-08-12",
+          "createdAt": "2026-08-12T06:55:27.301Z",
+          "remarks": "Sales Invoice Stock Deduction"
+        },
+        {
+          "mongoLedgerId": "6a7c1b4fb13e645f1c48c194",
+          "referenceNo": "INV-0003 (edit-restore)",
+          "transactionType": "RETURN",
+          "qtyChange": 10,
+          "grossWeightChange": 100,
+          "netWeightChange": 90,
+          "balanceQty": 19,
+          "balanceGrossWeight": 100,
+          "balanceNetWeight": 90,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)",
+          "date": "2026-08-12",
+          "createdAt": "2026-08-12T07:05:51.126Z",
+          "remarks": "Sales Invoice Return / Deletion"
+        },
+        {
+          "mongoLedgerId": "6a7c1b4fb13e645f1c48c198",
+          "referenceNo": "INV-0003 (edit)",
+          "transactionType": "SALE",
+          "qtyChange": -10,
+          "grossWeightChange": -100,
+          "netWeightChange": -90,
+          "balanceQty": 9,
+          "balanceGrossWeight": 0,
+          "balanceNetWeight": 0,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)",
+          "date": "2026-08-12",
+          "createdAt": "2026-08-12T07:05:51.365Z",
+          "remarks": "Sales Invoice Stock Deduction"
+        },
+        {
+          "mongoLedgerId": "6a7c1b59b13e645f1c48c1b8",
+          "referenceNo": "INV-0003",
+          "transactionType": "RETURN",
+          "qtyChange": 10,
+          "grossWeightChange": 100,
+          "netWeightChange": 90,
+          "balanceQty": 19,
+          "balanceGrossWeight": 100,
+          "balanceNetWeight": 90,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)",
+          "date": "2026-08-12",
+          "createdAt": "2026-08-12T07:06:01.580Z",
+          "remarks": "Sales Invoice Return / Deletion"
+        },
+        {
+          "mongoLedgerId": "6a7c1b7fb13e645f1c48c1d4",
+          "referenceNo": "INV-0003",
+          "transactionType": "SALE",
+          "qtyChange": -1,
+          "grossWeightChange": -100,
+          "netWeightChange": -90,
+          "balanceQty": 9,
+          "balanceGrossWeight": 0,
+          "balanceNetWeight": 0,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)",
+          "date": "2026-08-12",
+          "createdAt": "2026-08-12T07:06:39.113Z",
+          "remarks": "Sales Invoice Stock Deduction"
+        },
+        {
+          "mongoLedgerId": "6a7c1b98b13e645f1c48c1ef",
+          "referenceNo": "INV-0003 (edit-restore)",
+          "transactionType": "RETURN",
+          "qtyChange": 1,
+          "grossWeightChange": 100,
+          "netWeightChange": 90,
+          "balanceQty": 10,
+          "balanceGrossWeight": 100,
+          "balanceNetWeight": 90,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)",
+          "date": "2026-08-12",
+          "createdAt": "2026-08-12T07:07:04.108Z",
+          "remarks": "Sales Invoice Return / Deletion"
+        },
+        {
+          "mongoLedgerId": "6a7c1b98b13e645f1c48c1f3",
+          "referenceNo": "INV-0003 (edit)",
+          "transactionType": "SALE",
+          "qtyChange": -10,
+          "grossWeightChange": -100,
+          "netWeightChange": -90,
+          "balanceQty": 0,
+          "balanceGrossWeight": 0,
+          "balanceNetWeight": 0,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)",
+          "date": "2026-08-12",
+          "createdAt": "2026-08-12T07:07:04.321Z",
+          "remarks": "Sales Invoice Stock Deduction"
+        },
+        {
+          "mongoLedgerId": "6a7c1bbcb13e645f1c48c223",
+          "referenceNo": "INV-0003 (edit-restore)",
+          "transactionType": "RETURN",
+          "qtyChange": 10,
+          "grossWeightChange": 100,
+          "netWeightChange": 90,
+          "balanceQty": 10,
+          "balanceGrossWeight": 100,
+          "balanceNetWeight": 90,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)",
+          "date": "2026-08-12",
+          "createdAt": "2026-08-12T07:07:40.018Z",
+          "remarks": "Sales Invoice Return / Deletion"
+        },
+        {
+          "mongoLedgerId": "6a7c1bbcb13e645f1c48c227",
+          "referenceNo": "INV-0003 (edit)",
+          "transactionType": "SALE",
+          "qtyChange": -10,
+          "grossWeightChange": -100,
+          "netWeightChange": -90,
+          "balanceQty": 0,
+          "balanceGrossWeight": 0,
+          "balanceNetWeight": 0,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)",
+          "date": "2026-08-12",
+          "createdAt": "2026-08-12T07:07:40.357Z",
+          "remarks": "Sales Invoice Stock Deduction"
+        },
+        {
+          "mongoLedgerId": "6a7c1bd0b13e645f1c48c23b",
+          "referenceNo": "INV-0003 (edit-restore)",
+          "transactionType": "RETURN",
+          "qtyChange": 10,
+          "grossWeightChange": 100,
+          "netWeightChange": 90,
+          "balanceQty": 10,
+          "balanceGrossWeight": 100,
+          "balanceNetWeight": 90,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)",
+          "date": "2026-08-12",
+          "createdAt": "2026-08-12T07:08:00.011Z",
+          "remarks": "Sales Invoice Return / Deletion"
+        },
+        {
+          "mongoLedgerId": "6a7c1bd0b13e645f1c48c23f",
+          "referenceNo": "INV-0003 (edit)",
+          "transactionType": "SALE",
+          "qtyChange": -10,
+          "grossWeightChange": -100,
+          "netWeightChange": -90,
+          "balanceQty": 0,
+          "balanceGrossWeight": 0,
+          "balanceNetWeight": 0,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)",
+          "date": "2026-08-12",
+          "createdAt": "2026-08-12T07:08:00.331Z",
+          "remarks": "Sales Invoice Stock Deduction"
+        },
+        {
+          "mongoLedgerId": "6a7c1c02b13e645f1c48c25b",
+          "referenceNo": "SR-0001",
+          "transactionType": "RETURN",
+          "qtyChange": 10,
+          "grossWeightChange": 100,
+          "netWeightChange": 90,
+          "balanceQty": 10,
+          "balanceGrossWeight": 100,
+          "balanceNetWeight": 90,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)",
+          "date": "2026-08-12",
+          "createdAt": "2026-08-12T07:08:50.247Z",
+          "remarks": "Sales Return Stock Restoration"
+        },
+        {
+          "mongoLedgerId": "6a7c1fabd12740b5da8982e5",
+          "referenceNo": "INV-0003",
+          "transactionType": "SALE",
+          "qtyChange": -10,
+          "grossWeightChange": -100,
+          "netWeightChange": -90,
+          "balanceQty": 0,
+          "balanceGrossWeight": 0,
+          "balanceNetWeight": 0,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)",
+          "date": "2026-08-12",
+          "createdAt": "2026-08-12T07:24:27.272Z",
+          "remarks": "Sales Invoice Stock Deduction"
+        },
+        {
+          "mongoLedgerId": "6a7c2062d12740b5da898320",
+          "referenceNo": "SR-0001",
+          "transactionType": "RETURN",
+          "qtyChange": 10,
+          "grossWeightChange": 100,
+          "netWeightChange": 90,
+          "balanceQty": 10,
+          "balanceGrossWeight": 100,
+          "balanceNetWeight": 90,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)",
+          "date": "2026-08-12",
+          "createdAt": "2026-08-12T07:27:30.996Z",
+          "remarks": "Sales Return Stock Restoration"
+        }
+      ]
+    },
+    {
+      "shop": "demo",
+      "shopId": "6a718b3b4dc2277b0539b1e0",
+      "mongoItemId": "6a7ed149ce614e70acbbf026",
+      "mongoItemCode": "6a7ed149ce614e70acbbf026",
+      "mongoItemName": "cada",
+      "pgCandidates": [
+        {
+          "id": "a75c42cc-cb81-4e3c-904a-0063008cac59",
+          "name": "cada",
+          "barcode": null,
+          "currentStock": 10,
+          "currentGrossWeight": 90,
+          "currentNetWeight": 80
+        }
+      ],
+      "mongoLedgerRecordCount": 2,
+      "distinctReferenceNumbers": [
+        "INV-0006"
+      ],
+      "distinctTransactionTypes": [
+        "SALE",
+        "RETURN"
+      ],
+      "mongoFinalBalance": {
+        "qty": 10,
+        "gross": 100,
+        "net": 90
+      },
+      "mongoFinalBalanceAsOf": "6a7ed6c51cb1e8060fe57ecb",
+      "chainSelfConsistency": {
+        "consistent": true,
+        "breakCount": 0,
+        "breaks": []
+      },
+      "reviewReasons": [
+        "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)"
+      ],
+      "category": "C",
+      "categoryLabel": "DUPLICATE/COLLISION -- DO NOT MIGRATE",
+      "categoryReason": "This Mongo item resolves to the same PostgreSQL inventory row as at least one other distinct Mongo item. Migrating either would corrupt that PostgreSQL item's stock arithmetic by attributing another item's movements to it.",
+      "records": [
+        {
+          "mongoLedgerId": "6a7ed23dce614e70acbbf033",
+          "referenceNo": "INV-0006",
+          "transactionType": "SALE",
+          "qtyChange": -10,
+          "grossWeightChange": -100,
+          "netWeightChange": -90,
+          "balanceQty": 0,
+          "balanceGrossWeight": 0,
+          "balanceNetWeight": 0,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)",
+          "date": "2026-08-14",
+          "createdAt": "2026-08-14T08:30:53.696Z",
+          "remarks": "Sales Invoice Stock Deduction"
+        },
+        {
+          "mongoLedgerId": "6a7ed6c51cb1e8060fe57ecb",
+          "referenceNo": "INV-0006",
+          "transactionType": "RETURN",
+          "qtyChange": 10,
+          "grossWeightChange": 100,
+          "netWeightChange": 90,
+          "balanceQty": 10,
+          "balanceGrossWeight": 100,
+          "balanceNetWeight": 90,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a7b1e46e3c7d4b1d4c2a86d, 6a7ed149ce614e70acbbf026] all resolve to the same PostgreSQL item a75c42cc-cb81-4e3c-904a-0063008cac59; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=100, net=90) vs PostgreSQL current inventory (stock=10.000, gross=90.000, net=80.000)",
+          "date": "2026-08-14",
+          "createdAt": "2026-08-14T08:50:13.525Z",
+          "remarks": "Sales Invoice Return / Deletion"
+        }
+      ]
+    },
+    {
+      "shop": "demo",
+      "shopId": "6a718b3b4dc2277b0539b1e0",
+      "mongoItemId": "6a7c5c7d09dc3c8b01d71213",
+      "mongoItemCode": "6a7c5c7d09dc3c8b01d71213",
+      "mongoItemName": "chain",
+      "pgCandidates": [
+        {
+          "id": "643e9586-19ba-4014-8adb-d0565a13c50d",
+          "name": "CHAIN",
+          "barcode": "CAT-1786541383255",
+          "currentStock": 9,
+          "currentGrossWeight": 100,
+          "currentNetWeight": 90
+        },
+        {
+          "id": "ae7cbe2a-0428-4a6c-b89f-45e355475ed8",
+          "name": "chain",
+          "barcode": null,
+          "currentStock": 9,
+          "currentGrossWeight": 0,
+          "currentNetWeight": 0
+        }
+      ],
+      "mongoLedgerRecordCount": 1,
+      "distinctReferenceNumbers": [
+        "INV-0001"
+      ],
+      "distinctTransactionTypes": [
+        "SALE"
+      ],
+      "mongoFinalBalance": {
+        "qty": 9,
+        "gross": 0,
+        "net": 0
+      },
+      "mongoFinalBalanceAsOf": "6a7c6fa9998e6aee3d450344",
+      "chainSelfConsistency": {
+        "consistent": true,
+        "breakCount": 0,
+        "breaks": []
+      },
+      "reviewReasons": [
+        "2 PostgreSQL items matched by name -- never auto-resolving an ambiguous match"
+      ],
+      "category": "A",
+      "categoryLabel": "SAFE AFTER MANUAL MAPPING",
+      "categoryReason": "Multiple PostgreSQL items share the same normalized name; the audit will not auto-pick one. A human needs to confirm which candidate is correct.",
+      "records": [
+        {
+          "mongoLedgerId": "6a7c6fa9998e6aee3d450344",
+          "referenceNo": "INV-0001",
+          "transactionType": "SALE",
+          "qtyChange": -1,
+          "grossWeightChange": -100,
+          "netWeightChange": -90,
+          "balanceQty": 9,
+          "balanceGrossWeight": 0,
+          "balanceNetWeight": 0,
+          "matchMethod": "name_ambiguous",
+          "notes": "2 PostgreSQL items matched by name -- never auto-resolving an ambiguous match",
+          "date": "2026-08-12",
+          "createdAt": "2026-08-12T13:05:45.505Z",
+          "remarks": "Sales Invoice Stock Deduction"
+        }
+      ]
+    },
+    {
+      "shop": "patel",
+      "shopId": "6a61ed0b82703fb5d8f350b4",
+      "mongoItemId": "6a705443870d06d34ed239a8",
+      "mongoItemCode": "6a705443870d06d34ed239a8",
+      "mongoItemName": "chain",
+      "pgCandidates": [
+        {
+          "id": "ba0c25d6-bfa7-4a52-abd0-8ea38415cb0e",
+          "name": "chain",
+          "barcode": "123456",
+          "currentStock": 11,
+          "currentGrossWeight": 90,
+          "currentNetWeight": 80
+        }
+      ],
+      "mongoLedgerRecordCount": 4,
+      "distinctReferenceNumbers": [
+        "GST-0017"
+      ],
+      "distinctTransactionTypes": [
+        "SALE",
+        "RETURN"
+      ],
+      "mongoFinalBalance": {
+        "qty": 11,
+        "gross": 90,
+        "net": 180
+      },
+      "mongoFinalBalanceAsOf": "6a705d05713f3be0126048e9",
+      "chainSelfConsistency": {
+        "consistent": false,
+        "breakCount": 1,
+        "breaks": [
+          {
+            "afterMongoLedgerId": "6a705a8d870d06d34ed23aa8",
+            "atMongoLedgerId": "6a705d05713f3be0126048e9",
+            "expected": {
+              "qty": 10,
+              "gross": 90,
+              "net": 90
+            },
+            "actual": {
+              "qty": 11,
+              "gross": 90,
+              "net": 180
+            },
+            "qtyOk": false,
+            "grossOk": true,
+            "netOk": false
+          }
+        ]
+      },
+      "reviewReasons": [
+        "Collision: Mongo items [6a704606713f3be0126047a7, 6a705443870d06d34ed239a8] all resolve to the same PostgreSQL item ba0c25d6-bfa7-4a52-abd0-8ea38415cb0e; Item-level reconciliation mismatch: Mongo final balance (qty=11, gross=90, net=180) vs PostgreSQL current inventory (stock=11.000, gross=90.000, net=80.000)"
+      ],
+      "category": "C",
+      "categoryLabel": "DUPLICATE/COLLISION -- DO NOT MIGRATE",
+      "categoryReason": "This Mongo item resolves to the same PostgreSQL inventory row as at least one other distinct Mongo item. Migrating either would corrupt that PostgreSQL item's stock arithmetic by attributing another item's movements to it.",
+      "records": [
+        {
+          "mongoLedgerId": "6a705472870d06d34ed239bb",
+          "referenceNo": "GST-0017",
+          "transactionType": "SALE",
+          "qtyChange": -10,
+          "grossWeightChange": -100,
+          "netWeightChange": -90,
+          "balanceQty": 0,
+          "balanceGrossWeight": 0,
+          "balanceNetWeight": 0,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a704606713f3be0126047a7, 6a705443870d06d34ed239a8] all resolve to the same PostgreSQL item ba0c25d6-bfa7-4a52-abd0-8ea38415cb0e; Item-level reconciliation mismatch: Mongo final balance (qty=11, gross=90, net=180) vs PostgreSQL current inventory (stock=11.000, gross=90.000, net=80.000)",
+          "date": "2026-08-03",
+          "createdAt": "2026-08-03T08:42:26.549Z",
+          "remarks": "Sales Invoice Stock Deduction"
+        },
+        {
+          "mongoLedgerId": "6a70549c870d06d34ed239f8",
+          "referenceNo": "GST-0017",
+          "transactionType": "RETURN",
+          "qtyChange": 10,
+          "grossWeightChange": 100,
+          "netWeightChange": 90,
+          "balanceQty": 10,
+          "balanceGrossWeight": 100,
+          "balanceNetWeight": 90,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a704606713f3be0126047a7, 6a705443870d06d34ed239a8] all resolve to the same PostgreSQL item ba0c25d6-bfa7-4a52-abd0-8ea38415cb0e; Item-level reconciliation mismatch: Mongo final balance (qty=11, gross=90, net=180) vs PostgreSQL current inventory (stock=11.000, gross=90.000, net=80.000)",
+          "date": "2026-08-03",
+          "createdAt": "2026-08-03T08:43:08.961Z",
+          "remarks": "Sales Invoice Return / Deletion"
+        },
+        {
+          "mongoLedgerId": "6a705a8d870d06d34ed23aa8",
+          "referenceNo": "GST-0017",
+          "transactionType": "SALE",
+          "qtyChange": -1,
+          "grossWeightChange": -100,
+          "netWeightChange": -90,
+          "balanceQty": 9,
+          "balanceGrossWeight": 0,
+          "balanceNetWeight": 0,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a704606713f3be0126047a7, 6a705443870d06d34ed239a8] all resolve to the same PostgreSQL item ba0c25d6-bfa7-4a52-abd0-8ea38415cb0e; Item-level reconciliation mismatch: Mongo final balance (qty=11, gross=90, net=180) vs PostgreSQL current inventory (stock=11.000, gross=90.000, net=80.000)",
+          "date": "2026-08-03",
+          "createdAt": "2026-08-03T09:08:29.848Z",
+          "remarks": "Sales Invoice Stock Deduction"
+        },
+        {
+          "mongoLedgerId": "6a705d05713f3be0126048e9",
+          "referenceNo": "GST-0017",
+          "transactionType": "RETURN",
+          "qtyChange": 1,
+          "grossWeightChange": 90,
+          "netWeightChange": 90,
+          "balanceQty": 11,
+          "balanceGrossWeight": 90,
+          "balanceNetWeight": 180,
+          "matchMethod": "name",
+          "notes": "Collision: Mongo items [6a704606713f3be0126047a7, 6a705443870d06d34ed239a8] all resolve to the same PostgreSQL item ba0c25d6-bfa7-4a52-abd0-8ea38415cb0e; Item-level reconciliation mismatch: Mongo final balance (qty=11, gross=90, net=180) vs PostgreSQL current inventory (stock=11.000, gross=90.000, net=80.000)",
+          "date": "2026-08-03",
+          "createdAt": "2026-08-03T09:19:01.127Z",
+          "remarks": "Sales Invoice Return / Deletion"
+        }
+      ]
+    },
+    {
+      "shop": "patel",
+      "shopId": "6a61ed0b82703fb5d8f350b4",
+      "mongoItemId": "6a704606713f3be0126047a7",
+      "mongoItemCode": "123456",
+      "mongoItemName": "chian",
+      "pgCandidates": [
+        {
+          "id": "ba0c25d6-bfa7-4a52-abd0-8ea38415cb0e",
+          "name": "chain",
+          "barcode": "123456",
+          "currentStock": 11,
+          "currentGrossWeight": 90,
+          "currentNetWeight": 80
+        }
+      ],
+      "mongoLedgerRecordCount": 4,
+      "distinctReferenceNumbers": [
+        "GST-0017"
+      ],
+      "distinctTransactionTypes": [
+        "SALE",
+        "RETURN"
+      ],
+      "mongoFinalBalance": {
+        "qty": 10,
+        "gross": 200,
+        "net": 90
+      },
+      "mongoFinalBalanceAsOf": "6a7053e5870d06d34ed2396a",
+      "chainSelfConsistency": {
+        "consistent": false,
+        "breakCount": 2,
+        "breaks": [
+          {
+            "afterMongoLedgerId": "6a704e8697588f692a6a84e5",
+            "atMongoLedgerId": "6a70509497588f692a6a8640",
+            "expected": {
+              "qty": 19,
+              "gross": 100,
+              "net": 900
+            },
+            "actual": {
+              "qty": 19,
+              "gross": 0,
+              "net": 900
+            },
+            "qtyOk": true,
+            "grossOk": false,
+            "netOk": true
+          },
+          {
+            "afterMongoLedgerId": "6a70509497588f692a6a8640",
+            "atMongoLedgerId": "6a705316156e4edc96be879c",
+            "expected": {
+              "qty": 9,
+              "gross": -100,
+              "net": 810
+            },
+            "actual": {
+              "qty": 0,
+              "gross": 100,
+              "net": 0
+            },
+            "qtyOk": false,
+            "grossOk": false,
+            "netOk": false
+          }
+        ]
+      },
+      "reviewReasons": [
+        "Collision: Mongo items [6a704606713f3be0126047a7, 6a705443870d06d34ed239a8] all resolve to the same PostgreSQL item ba0c25d6-bfa7-4a52-abd0-8ea38415cb0e; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=200, net=90) vs PostgreSQL current inventory (stock=11.000, gross=90.000, net=80.000)"
+      ],
+      "category": "C",
+      "categoryLabel": "DUPLICATE/COLLISION -- DO NOT MIGRATE",
+      "categoryReason": "This Mongo item resolves to the same PostgreSQL inventory row as at least one other distinct Mongo item. Migrating either would corrupt that PostgreSQL item's stock arithmetic by attributing another item's movements to it.",
+      "records": [
+        {
+          "mongoLedgerId": "6a704e8697588f692a6a84e5",
+          "referenceNo": "GST-0017",
+          "transactionType": "SALE",
+          "qtyChange": -1,
+          "grossWeightChange": -100,
+          "netWeightChange": -90,
+          "balanceQty": 9,
+          "balanceGrossWeight": 100,
+          "balanceNetWeight": 0,
+          "matchMethod": "barcode",
+          "notes": "Collision: Mongo items [6a704606713f3be0126047a7, 6a705443870d06d34ed239a8] all resolve to the same PostgreSQL item ba0c25d6-bfa7-4a52-abd0-8ea38415cb0e; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=200, net=90) vs PostgreSQL current inventory (stock=11.000, gross=90.000, net=80.000)",
+          "date": "2026-08-03",
+          "createdAt": "2026-08-03T08:17:10.176Z",
+          "remarks": "Sales Invoice Stock Deduction"
+        },
+        {
+          "mongoLedgerId": "6a70509497588f692a6a8640",
+          "referenceNo": "GST-0017",
+          "transactionType": "RETURN",
+          "qtyChange": 10,
+          "grossWeightChange": 0,
+          "netWeightChange": 900,
+          "balanceQty": 19,
+          "balanceGrossWeight": 0,
+          "balanceNetWeight": 900,
+          "matchMethod": "barcode",
+          "notes": "Collision: Mongo items [6a704606713f3be0126047a7, 6a705443870d06d34ed239a8] all resolve to the same PostgreSQL item ba0c25d6-bfa7-4a52-abd0-8ea38415cb0e; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=200, net=90) vs PostgreSQL current inventory (stock=11.000, gross=90.000, net=80.000)",
+          "date": "2026-08-03",
+          "createdAt": "2026-08-03T08:25:56.534Z",
+          "remarks": "Sales Invoice Return / Deletion"
+        },
+        {
+          "mongoLedgerId": "6a705316156e4edc96be879c",
+          "referenceNo": "GST-0017",
+          "transactionType": "SALE",
+          "qtyChange": -10,
+          "grossWeightChange": -100,
+          "netWeightChange": -90,
+          "balanceQty": 0,
+          "balanceGrossWeight": 100,
+          "balanceNetWeight": 0,
+          "matchMethod": "barcode",
+          "notes": "Collision: Mongo items [6a704606713f3be0126047a7, 6a705443870d06d34ed239a8] all resolve to the same PostgreSQL item ba0c25d6-bfa7-4a52-abd0-8ea38415cb0e; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=200, net=90) vs PostgreSQL current inventory (stock=11.000, gross=90.000, net=80.000)",
+          "date": "2026-08-03",
+          "createdAt": "2026-08-03T08:36:38.151Z",
+          "remarks": "Sales Invoice Stock Deduction"
+        },
+        {
+          "mongoLedgerId": "6a7053e5870d06d34ed2396a",
+          "referenceNo": "GST-0017",
+          "transactionType": "RETURN",
+          "qtyChange": 10,
+          "grossWeightChange": 100,
+          "netWeightChange": 90,
+          "balanceQty": 10,
+          "balanceGrossWeight": 200,
+          "balanceNetWeight": 90,
+          "matchMethod": "barcode",
+          "notes": "Collision: Mongo items [6a704606713f3be0126047a7, 6a705443870d06d34ed239a8] all resolve to the same PostgreSQL item ba0c25d6-bfa7-4a52-abd0-8ea38415cb0e; Item-level reconciliation mismatch: Mongo final balance (qty=10, gross=200, net=90) vs PostgreSQL current inventory (stock=11.000, gross=90.000, net=80.000)",
+          "date": "2026-08-03",
+          "createdAt": "2026-08-03T08:40:05.898Z",
+          "remarks": "Sales Invoice Return / Deletion"
+        }
+      ]
+    },
+    {
+      "shop": "patel",
+      "shopId": "6a61ed0b82703fb5d8f350b4",
+      "mongoItemId": "6a69d080ae4fc70230b91a99",
+      "mongoItemCode": "JW-475669",
+      "mongoItemName": "mangalsutra",
+      "pgCandidates": [],
+      "mongoLedgerRecordCount": 1,
+      "distinctReferenceNumbers": [
+        "INV-0012"
+      ],
+      "distinctTransactionTypes": [
+        "SALE"
+      ],
+      "mongoFinalBalance": {
+        "qty": 0,
+        "gross": 10,
+        "net": 0
+      },
+      "mongoFinalBalanceAsOf": "6a69e6754108effddf8311e1",
+      "chainSelfConsistency": {
+        "consistent": true,
+        "breakCount": 0,
+        "breaks": []
+      },
+      "reviewReasons": [],
+      "category": "E",
+      "categoryLabel": "MISSING POSTGRES INVENTORY -- DO NOT MIGRATE",
+      "categoryReason": "No PostgreSQL inventory row matches this Mongo item by item_code, barcode, sku, qr_code, or normalized name within this shop.",
+      "records": [
+        {
+          "mongoLedgerId": "6a69e6754108effddf8311e1",
+          "referenceNo": "INV-0012",
+          "transactionType": "SALE",
+          "qtyChange": -1,
+          "grossWeightChange": -10,
+          "netWeightChange": -8,
+          "balanceQty": 0,
+          "balanceGrossWeight": 10,
+          "balanceNetWeight": 0,
+          "matchMethod": "none",
+          "notes": "",
+          "date": "2026-07-29",
+          "createdAt": "2026-07-29T11:39:33.514Z",
+          "remarks": "Sales Invoice Stock Deduction"
+        }
+      ],
+      "missingInventorySearch": {
+        "searchedByItemCode": "JW-475669",
+        "searchedByBarcode": "JW-475669",
+        "searchedByNormalizedName": "mangalsutra",
+        "fieldsChecked": [
+          "item_code",
+          "barcode",
+          "sku",
+          "qr_code",
+          "name (normalized)"
+        ],
+        "patelInventoryRowCount": 3,
+        "patelInventoryNames": [
+          "chain",
+          "Cada",
+          "Bulk Purchase: Gold 22K (PUR-0003)"
+        ],
+        "result": "No match on any field. No PostgreSQL inventory row for this item exists in the patel shop.",
+        "actionTaken": "None -- no new inventory row was created, per instructions."
+      }
+    },
+    {
+      "shop": "soni-jewellers",
+      "shopId": "6a61cf80d89b40196b00ec80",
+      "mongoItemId": "6a60a4c67e1d225f6317d70d",
+      "mongoItemCode": "AJ-8KN933BBQX",
+      "mongoItemName": "18K GENTS RING ",
+      "pgCandidates": [],
+      "mongoLedgerRecordCount": 2,
+      "distinctReferenceNumbers": [
+        "INV-0003"
+      ],
+      "distinctTransactionTypes": [
+        "SALE",
+        "RETURN"
+      ],
+      "mongoFinalBalance": {
+        "qty": 100005,
+        "gross": 100000000001.02,
+        "net": 100000000017.74
+      },
+      "mongoFinalBalanceAsOf": "6a6ae184f3a9d54d4f2fe05a",
+      "chainSelfConsistency": {
+        "consistent": false,
+        "breakCount": 1,
+        "breaks": [
+          {
+            "afterMongoLedgerId": "6a6ae0ecf3a9d54d4f2fe01f",
+            "atMongoLedgerId": "6a6ae184f3a9d54d4f2fe05a",
+            "expected": {
+              "qty": 100004,
+              "gross": 200000000002.04,
+              "net": 100000000015.38
+            },
+            "actual": {
+              "qty": 100005,
+              "gross": 100000000001.02,
+              "net": 100000000017.74
+            },
+            "qtyOk": false,
+            "grossOk": false,
+            "netOk": false
+          }
+        ]
+      },
+      "reviewReasons": [
+        "Data sanity check failed: extreme-magnitude or negative weight/qty value"
+      ],
+      "category": "D",
+      "categoryLabel": "HISTORICAL DATA ANOMALY -- DO NOT MIGRATE",
+      "categoryReason": "One or more ledger records contain extreme-magnitude or negative weight/qty values that cannot represent physically real jewellery weights.",
+      "records": [
+        {
+          "mongoLedgerId": "6a6ae0ecf3a9d54d4f2fe01f",
+          "referenceNo": "INV-0003",
+          "transactionType": "SALE",
+          "qtyChange": -1,
+          "grossWeightChange": -100000000001.02,
+          "netWeightChange": -2.36,
+          "balanceQty": 100003,
+          "balanceGrossWeight": 100000000001.02,
+          "balanceNetWeight": 100000000013.02,
+          "matchMethod": "none",
+          "notes": "Data sanity check failed: extreme-magnitude or negative weight/qty value",
+          "date": "2026-07-30",
+          "createdAt": "2026-07-30T05:28:12.990Z",
+          "remarks": "Sales Invoice Stock Deduction"
+        },
+        {
+          "mongoLedgerId": "6a6ae184f3a9d54d4f2fe05a",
+          "referenceNo": "INV-0003",
+          "transactionType": "RETURN",
+          "qtyChange": 1,
+          "grossWeightChange": 100000000001.02,
+          "netWeightChange": 2.36,
+          "balanceQty": 100005,
+          "balanceGrossWeight": 100000000001.02,
+          "balanceNetWeight": 100000000017.74,
+          "matchMethod": "none",
+          "notes": "Data sanity check failed: extreme-magnitude or negative weight/qty value",
+          "date": "2026-07-30",
+          "createdAt": "2026-07-30T05:30:44.399Z",
+          "remarks": "Sales Invoice Return / Deletion"
+        }
+      ],
+      "anomalyMagnitude": {
+        "maxAbsGrossWeightChange": 100000000001.02,
+        "maxAbsNetWeightChange": 2.36,
+        "grossToNetRatio": 42372881356.36441,
+        "ratioVsTypicalRingWeight": 12500000000.1275,
+        "explanation": "grossWeightChange magnitude (100,000,000,001.02 g) is 42,372,881,356x larger than netWeightChange (2.36 g) on the same record. Net weight must always be <= gross weight for a physical jewellery item (net = gross - stone/other weight), so a ratio this large is structurally impossible, not just unusual. For scale: 100,000,000,001.02 g is roughly 1.25e+10x the gross weight of a typical gold ring (~8 g, e.g. Jitendra's \"gold rings\" item at 50.76 g total for 16 units). This is corrupted/anomalous data, not a real weight -- classified ANOMALY, do not migrate."
+      }
+    }
+  ]
+}
