@@ -17,7 +17,9 @@
     "worker:pg": "node dist/workerPg.js",
     "dev:worker": "tsx watch src/workerPg.ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "typecheck:test": "tsc --noEmit -p tsconfig.test.json"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
