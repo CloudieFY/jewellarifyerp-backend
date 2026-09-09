@@ -23,6 +23,7 @@ import schemesPgRouter from './routes/schemesPg';
 import inventoryExtendedPgRouter from './routes/inventoryExtendedPg';
 import superAdminPgRouter from './routes/superAdminPg';
 import publicPgRouter from './routes/publicPg';
+import crmRouter from './crm/routes';
 
 /**
  * PostgreSQL test server (core-first migration).
@@ -77,6 +78,7 @@ app.use('/api/girvi', girviPgRouter);
 app.use('/api/orders', ordersPgRouter);
 app.use('/api/employees', employeesPgRouter);
 app.use('/api/schemes', schemesPgRouter);
+app.use('/api/crm', crmRouter);
 
 app.use(errorHandler);
 
