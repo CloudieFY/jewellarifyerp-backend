@@ -309,6 +309,10 @@ router.post('/', requireTenantAuth(['owner', 'operator']), async (req: Request, 
       delete body.id;
       delete body._id;
 
+      if (body.oldMetalType && !['Gold', 'Silver', 'Mixed'].includes(body.oldMetalType)) {
+        delete body.oldMetalType;
+      }
+
       if (body.createdAt) {
         body.createdAt = new Date(body.createdAt);
       }
@@ -375,6 +379,10 @@ router.put('/:id', requireTenantAuth(['owner', 'operator']), async (req: Request
     const updateData = { ...req.body };
     delete updateData.id;
     delete updateData._id;
+
+    if (updateData.oldMetalType && !['Gold', 'Silver', 'Mixed'].includes(updateData.oldMetalType)) {
+      delete updateData.oldMetalType;
+    }
 
     if (!updateData.number || typeof updateData.number !== 'string' || !updateData.number.trim()) {
       delete updateData.number;
