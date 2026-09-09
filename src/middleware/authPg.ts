@@ -7,6 +7,8 @@ import {
 } from '../utils/jwt';
 import { findShopById, ShopRow } from '../repositories/shopRepository';
 import { rowToApi } from '../db/mapping';
+import { pgPool } from '../config/postgres';
+import { resolveUserPermissions, expandPermissions } from '../crm/permissions';
 
 /**
  * PostgreSQL tenant-auth middleware — the security boundary for every
@@ -17,17 +19,41 @@ import { rowToApi } from '../db/mapping';
  * still exists and is in good standing, and attach `req.pgTenant.shopId`.
  * Route handlers scope every query with `WHERE shop_id = $1` using that value,
  * which comes only from the signed token — never from the request.
+ *
+ * It also loads the caller's `users` row (CRM columns included) so
+ * `req.pgTenant.permissionSet` reflects the CURRENT database state on every
+ * request — a revoked CRM permission or role takes effect immediately, with
+ * no token re-issue. CRM routes read this via `requireCrmPermission()`.
  */
+
+/** The tenant context every PG route sees on `req.pgTenant`. */
+export interface PgTenantContext {
+  shopId: string;
+  shop: any;
+  shopRow: ShopRow;
+  /** ERP role from the verified JWT: 'owner' | 'operator' | 'karigar'. */
+  role: TenantTokenPayload['role'];
+  /** Optional CRM persona from `users.crm_role` (null for most ERP logins). */
+  crmRole: string | null;
+  /** Effective CRM permissions, wildcards expanded (for API/UX responses). */
+  permissions: string[];
+  /** Effective CRM permissions as a Set (may contain `*` / `<entity>.*`). */
+  permissionSet: Set<string>;
+  user: {
+    id: string;
+    username: string;
+    name: string | null;
+    role: TenantTokenPayload['role'];
+    /** Raw additive grants from `users.permissions` (un-expanded). */
+    permissions: string[];
+  };
+}
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
-      pgTenant?: {
-        shopId: string;
-        shop: any;
-        shopRow: ShopRow;
-      };
+      pgTenant?: PgTenantContext;
       superAdmin?: SuperAdminTokenPayload;
     }
   }
@@ -64,6 +90,27 @@ export function requireSuperAdminPg(req: Request, res: Response, next: NextFunct
   }
 }
 
+interface CrmUserRow {
+  id: string;
+  username: string;
+  name: string | null;
+  role: TenantTokenPayload['role'];
+  crm_role: string | null;
+  permissions: string[] | null;
+  is_active: boolean;
+}
+
+/** Load the live `users` row for the token subject, scoped to the shop. */
+async function loadTenantUser(userId: string, shopId: string): Promise<CrmUserRow | null> {
+  const { rows } = await pgPool.query(
+    `SELECT id, username, name, role, crm_role, permissions, is_active
+       FROM users
+      WHERE id = $1 AND shop_id = $2`,
+    [userId, shopId],
+  );
+  return (rows[0] as CrmUserRow) ?? null;
+}
+
 export function requirePgTenantAuth(
   allowedRoles?: Array<'owner' | 'operator' | 'karigar'>
 ) {
@@ -96,11 +143,35 @@ export function requirePgTenantAuth(
         return res.status(403).json({ error: 'This shop subscription has expired. Please renew to continue.' });
       }
 
+      // Live user row — the source of truth for CRM role / permissions.
+      const userRow = await loadTenantUser(payload.sub, payload.shopId);
+      if (!userRow || userRow.is_active === false) {
+        return res.status(401).json({ error: 'User not found or inactive' });
+      }
+
+      const rawGrants = Array.isArray(userRow.permissions) ? userRow.permissions : [];
+      const permissionSet = resolveUserPermissions({
+        role: userRow.role,
+        crm_role: userRow.crm_role,
+        permissions: rawGrants,
+      });
+
       req.tenantAuth = payload;
       req.pgTenant = {
         shopId: payload.shopId,
         shop: rowToApi(shop),
         shopRow: shop,
+        role: userRow.role,
+        crmRole: userRow.crm_role ?? null,
+        permissions: expandPermissions(permissionSet),
+        permissionSet,
+        user: {
+          id: userRow.id,
+          username: userRow.username,
+          name: userRow.name ?? null,
+          role: userRow.role,
+          permissions: rawGrants,
+        },
       };
       next();
     } catch (err: any) {
