@@ -24,6 +24,8 @@ export interface ShopRow {
   initial_operator_username: string | null;
   legacy_db_name: string | null;
   notes: string | null;
+  allowed_modules: string[];
+  allowed_pages: string[];
   created_at: Date;
   updated_at: Date;
 }
@@ -85,6 +87,8 @@ export async function createShop(input: {
   initialOperatorUsername?: string;
   legacyDbName?: string;
   notes?: string;
+  allowedModules?: string[];
+  allowedPages?: string[];
 }): Promise<ShopRow> {
   const id = input.id ?? generateId('shop');
 
@@ -107,11 +111,13 @@ export async function createShop(input: {
       initial_admin_username,
       initial_operator_username,
       legacy_db_name,
-      notes
+      notes,
+      allowed_modules,
+      allowed_pages
     )
     VALUES (
       $1, $2, $3, $4, $5, $6, $7, $8, $9,
-      $10, 'active', $11, $12, $13, $14, $15, $16
+      $10, 'active', $11, $12, $13, $14, $15, $16, $17, $18
     )
     RETURNING *
     `,
@@ -132,6 +138,8 @@ export async function createShop(input: {
       input.initialOperatorUsername ?? null,
       input.legacyDbName ?? null,
       input.notes ?? null,
+      Array.isArray(input.allowedModules) ? input.allowedModules : [],
+      Array.isArray(input.allowedPages) ? input.allowedPages : [],
     ]
   );
 
@@ -162,6 +170,8 @@ export async function updateShop(
     initialAdminUsername: 'initial_admin_username',
     initialOperatorUsername: 'initial_operator_username',
     notes: 'notes',
+    allowedModules: 'allowed_modules',
+    allowedPages: 'allowed_pages',
   };
 
   const entries = Object.entries(updates)

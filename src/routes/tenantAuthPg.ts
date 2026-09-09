@@ -136,6 +136,9 @@ router.put('/shop', requirePgTenantAuth(['owner', 'operator']), async (req: Requ
     for (const k of [
       'id', '_id', 'slug', 'dbName', 'legacyDbName', 'status', 'plan',
       'subscriptionStartDate', 'subscriptionEndDate', 'createdAt', 'updatedAt',
+      // Feature-access lists are set by the super admin only — a tenant must not
+      // be able to widen its own module/page access.
+      'allowedModules', 'allowedPages',
     ]) {
       delete updateData[k];
     }

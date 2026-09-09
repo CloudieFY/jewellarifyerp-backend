@@ -382,6 +382,14 @@ router.post('/', requirePgTenantAuth(WRITE_ROLES), async (req: Request, res: Res
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     try {
       const body = { ...req.body } as any;
+
+      // `invoices_old_metal_type_check` only allows Gold / Silver / Mixed. Drop
+      // anything else (empty string, legacy values) so it falls back to the
+      // column default instead of failing the insert.
+      if (body.oldMetalType && !['Gold', 'Silver', 'Mixed'].includes(body.oldMetalType)) {
+        delete body.oldMetalType;
+      }
+
       const isManual = isManualInvoicePayload(body);
       const forcedNumber =
         typeof body.number === 'string' && body.number.trim() ? body.number.trim() : null;
@@ -444,6 +452,11 @@ router.put('/:id', requirePgTenantAuth(WRITE_ROLES), async (req: Request, res: R
         delete body.number;
       } else {
         body.number = body.number.trim();
+      }
+
+      // See POST handler: keep old_metal_type within the CHECK constraint.
+      if (body.oldMetalType && !['Gold', 'Silver', 'Mixed'].includes(body.oldMetalType)) {
+        delete body.oldMetalType;
       }
 
       // 1. undo the original sale
