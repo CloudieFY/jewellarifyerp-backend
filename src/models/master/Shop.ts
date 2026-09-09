@@ -1,6 +1,6 @@
 import { Schema, Document, Connection, Model, Types } from 'mongoose';
 
-export type ShopPlan = 'trial' | 'basic' | 'standard' | 'premium';
+export type ShopPlan = 'spark' | 'hero' | 'prime' | 'custom' | 'trial' | 'basic' | 'standard' | 'premium';
 export type ShopStatus = 'active' | 'suspended' | 'expired';
 
 export interface IShop extends Document {
@@ -25,6 +25,10 @@ export interface IShop extends Document {
   status: ShopStatus;
   subscriptionStartDate: Date;
   subscriptionEndDate: Date;
+
+  // Module and page level feature access controls
+  allowedModules?: string[];
+  allowedPages?: string[];
 
   // The very first login users created for this shop (owner + operator).
   // Actual credentials live in the tenant DB's User collection; these are
@@ -55,10 +59,17 @@ const shopSchema = new Schema<IShop>(
     termsAndConditions: { type: String },
     invoiceSettings: { type: Schema.Types.Mixed, default: {} },
 
-    plan: { type: String, enum: ['trial', 'basic', 'standard', 'premium'], default: 'trial' },
+    plan: {
+      type: String,
+      enum: ['spark', 'hero', 'prime', 'custom', 'trial', 'basic', 'standard', 'premium'],
+      default: 'spark',
+    },
     status: { type: String, enum: ['active', 'suspended', 'expired'], default: 'active' },
     subscriptionStartDate: { type: Date, required: true, default: Date.now },
     subscriptionEndDate: { type: Date, required: true },
+
+    allowedModules: { type: [String], default: [] },
+    allowedPages: { type: [String], default: [] },
 
     initialAdminUsername: { type: String, required: true },
     initialOperatorUsername: { type: String },

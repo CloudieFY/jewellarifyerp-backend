@@ -226,6 +226,8 @@ router.post('/shops', async (req: Request, res: Response) => {
       gstNumber,
       plan,
       subscriptionEndDate,
+      allowedModules,
+      allowedPages,
       gstAdminUsername,
       gstAdminPassword,
       nonGstAdminUsername,
@@ -279,10 +281,12 @@ router.post('/shops', async (req: Request, res: Response) => {
       logoUrl,
       address,
       gstNumber,
-      plan: plan || 'trial',
+      plan: plan || 'spark',
       status: 'active',
       subscriptionStartDate: new Date(),
       subscriptionEndDate: endDate,
+      allowedModules: Array.isArray(allowedModules) ? allowedModules : [],
+      allowedPages: Array.isArray(allowedPages) ? allowedPages : [],
       initialAdminUsername: normalizedGstUsername,
       initialOperatorUsername: normalizedNonGstUsername, // Store the operator username
       dbName: '', // filled below once we know the _id
