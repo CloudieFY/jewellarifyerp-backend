@@ -41,7 +41,10 @@ const router = Router();
 const LEAD_LIST_CONFIG: ListQueryConfig = {
   sortable: ['created_at', 'updated_at', 'name', 'status', 'last_activity_at'],
   defaultSort: { column: 'created_at', direction: 'DESC' },
-  filterable: ['status', 'source', 'assigned_to', 'branch_id'],
+  // customer_id / converted_customer_id let the Customer 360 view pull the
+  // leads tied to one customer; both are real crm_lead columns and are matched
+  // as bound equality params by parseListQuery (no SQL identifier interpolation).
+  filterable: ['status', 'source', 'assigned_to', 'branch_id', 'customer_id', 'converted_customer_id'],
   searchable: ['name', 'phone', 'email', 'company'],
   maxLimit: 100,
   defaultLimit: 25,
