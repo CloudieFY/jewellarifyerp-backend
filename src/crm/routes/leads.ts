@@ -6,7 +6,13 @@ import { parseListQuery, assertNoClientShopScope, type ListQueryConfig } from '.
 import { recordAudit } from '../audit/recordAudit';
 import { enqueueOutbox } from '../outbox/repository';
 import { recordActivity, listActivity, type ActivityType } from '../activity/repository';
-import { convertLead } from '../leads/service';
+import {
+  convertLead,
+  qualifyLead,
+  promoteLeadToOpportunity,
+  type QualifyInput,
+  type PromoteInput,
+} from '../leads/service';
 import {
   listLeads,
   getLeadById,
@@ -16,10 +22,13 @@ import {
   branchBelongsToShop,
   userBelongsToShop,
   LEAD_STATUSES,
+  QUALIFICATION_STATUSES,
   type LeadScope,
   type LeadRow,
   type LeadWritable,
+  type QualificationStatus,
 } from '../leads/repository';
+import { OPEN_OPPORTUNITY_STAGES } from '../opportunities/repository';
 import type { PgTenantContext } from '../../middleware/authPg';
 import type { PoolClient } from 'pg';
 
@@ -44,7 +53,15 @@ const LEAD_LIST_CONFIG: ListQueryConfig = {
   // customer_id / converted_customer_id let the Customer 360 view pull the
   // leads tied to one customer; both are real crm_lead columns and are matched
   // as bound equality params by parseListQuery (no SQL identifier interpolation).
-  filterable: ['status', 'source', 'assigned_to', 'branch_id', 'customer_id', 'converted_customer_id'],
+  filterable: [
+    'status',
+    'source',
+    'assigned_to',
+    'branch_id',
+    'customer_id',
+    'converted_customer_id',
+    'qualification_status',
+  ],
   searchable: ['name', 'phone', 'email', 'company'],
   maxLimit: 100,
   defaultLimit: 25,
@@ -456,72 +473,209 @@ router.post('/:id/assign', ...requireCrmPermission('lead', 'assign'), async (req
 });
 
 /* ------------------------------------------------------------------ */
-/* POST /api/crm/leads/:id/qualify                                     */
+/* POST /api/crm/leads/:id/qualify   (Phase 3 — structured)            */
 /* ------------------------------------------------------------------ */
+
+/** Whitelisted `qualification_data` keys and the enum values we accept. */
+const QUALIFICATION_DATA_ENUMS: Record<string, readonly string[]> = {
+  authority: ['decision_maker', 'influencer', 'none', 'unknown'],
+  need: ['high', 'medium', 'low', 'unknown'],
+  timeline: ['immediate', '1_3_months', '3_6_months', '6_plus_months', 'unknown'],
+};
+const QUALIFICATION_DATA_TEXT_MAX: Record<string, number> = {
+  budget: 120,
+  interest: 200,
+  objections: 500,
+};
+const QUALIFICATION_DATA_KEYS = new Set([
+  ...Object.keys(QUALIFICATION_DATA_ENUMS),
+  ...Object.keys(QUALIFICATION_DATA_TEXT_MAX),
+]);
+
+function parseQualificationData(
+  raw: unknown,
+): { ok: true; value: Record<string, unknown> | null } | { ok: false; error: string } {
+  if (raw === undefined || raw === null) return { ok: true, value: null };
+  if (typeof raw !== 'object' || Array.isArray(raw)) {
+    return { ok: false, error: 'data must be an object' };
+  }
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
+    if (v === undefined || v === null || v === '') continue;
+    if (!QUALIFICATION_DATA_KEYS.has(k)) {
+      return { ok: false, error: `data.${k} is not an accepted qualification field` };
+    }
+    if (k in QUALIFICATION_DATA_ENUMS) {
+      if (typeof v !== 'string' || !QUALIFICATION_DATA_ENUMS[k].includes(v)) {
+        return { ok: false, error: `data.${k} must be one of: ${QUALIFICATION_DATA_ENUMS[k].join(', ')}` };
+      }
+      out[k] = v;
+    } else {
+      const max = QUALIFICATION_DATA_TEXT_MAX[k];
+      if (typeof v !== 'string' || v.length > max) {
+        return { ok: false, error: `data.${k} must be a string of at most ${max} characters` };
+      }
+      out[k] = v;
+    }
+  }
+  if (Object.keys(out).length === 0) return { ok: true, value: null };
+  if (JSON.stringify(out).length > 4096) {
+    return { ok: false, error: 'data is too large' };
+  }
+  return { ok: true, value: out };
+}
+
+function parseQualifyBody(
+  body: any,
+): { ok: true; value: QualifyInput } | { ok: false; error: string } {
+  const b = body ?? {};
+
+  // Outcome: prefer the explicit Phase 3 field; fall back to the Phase 1 shape
+  // ({ qualified: boolean, status: 'unqualified' }) so old clients keep working.
+  let outcome: QualificationStatus;
+  const explicitOutcome = b.outcome !== undefined;
+  if (explicitOutcome) {
+    if (!QUALIFICATION_STATUSES.includes(b.outcome)) {
+      return { ok: false, error: `outcome must be one of: ${QUALIFICATION_STATUSES.join(', ')}` };
+    }
+    outcome = b.outcome;
+  } else {
+    const legacyDisqualified = b.qualified === false || b.status === 'unqualified';
+    outcome = legacyDisqualified ? 'disqualified' : 'qualified';
+  }
+
+  let score: number | null | undefined;
+  if (b.score !== undefined && b.score !== null && b.score !== '') {
+    const n = Number(b.score);
+    if (!Number.isInteger(n) || n < 0 || n > 100) {
+      return { ok: false, error: 'score must be an integer between 0 and 100' };
+    }
+    score = n;
+  } else if (b.score === null || b.score === '') {
+    score = null;
+  }
+
+  const reason =
+    typeof b.reason === 'string' && b.reason.trim().length > 0 ? b.reason.trim() : null;
+  // The stricter "reason required to disqualify" rule applies to the explicit
+  // Phase 3 `outcome` shape; the legacy { qualified: false } shape stays lenient.
+  if (explicitOutcome && outcome === 'disqualified' && !reason) {
+    return { ok: false, error: 'reason is required when disqualifying a lead' };
+  }
+
+  const notes =
+    typeof b.notes === 'string' && b.notes.trim().length > 0 ? b.notes.trim() : undefined;
+
+  const dataParsed = parseQualificationData(b.data);
+  if (!dataParsed.ok) return { ok: false, error: dataParsed.error };
+
+  let nurtureUntil: string | null | undefined;
+  const rawNurture = b.nurtureUntil ?? b.nurture_until;
+  if (rawNurture !== undefined && rawNurture !== null && rawNurture !== '') {
+    const s = String(rawNurture);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(s) || Number.isNaN(Date.parse(s))) {
+      return { ok: false, error: 'nurtureUntil must be a YYYY-MM-DD date' };
+    }
+    nurtureUntil = s;
+  } else if (rawNurture === null || rawNurture === '') {
+    nurtureUntil = null;
+  }
+
+  const value: QualifyInput = { outcome, reason };
+  if (score !== undefined) value.score = score;
+  if (notes !== undefined) value.notes = notes;
+  if (b.data !== undefined) value.data = dataParsed.value;
+  if (nurtureUntil !== undefined) value.nurtureUntil = nurtureUntil;
+  return { ok: true, value };
+}
+
 router.post('/:id/qualify', ...requireCrmPermission('lead', 'qualify'), async (req: Request, res: Response) => {
   if (!guardShopScope(req, res)) return;
   const ctx = req.pgTenant!;
-  const qualified = req.body?.qualified !== false && req.body?.status !== 'unqualified';
-  const nextStatus = qualified ? 'qualified' : 'unqualified';
-  const reason = typeof req.body?.reason === 'string' ? req.body.reason : null;
+
+  const parsed = parseQualifyBody(req.body);
+  if (!parsed.ok) return res.status(400).json({ error: parsed.error });
 
   try {
     const outcome = await withTenant(ctx.shopId, async (client) => {
       const scope = await resolveLeadScope(client, ctx);
-      const before = await getLeadById(client, ctx.shopId, req.params.id, { scope, forUpdate: true });
-      if (!before) return { err: { status: 404, msg: 'Lead not found' } };
-      if (before.status === 'converted') {
-        return { err: { status: 409, msg: 'Lead is already converted' } };
-      }
-
-      const updated = await updateLead(client, ctx.shopId, req.params.id, {
-        status: nextStatus,
-        qualified_at: qualified ? new Date() : before.qualified_at,
-        last_activity_at: new Date(),
-      });
-      if (!updated) return { err: { status: 404, msg: 'Lead not found' } };
-
-      await recordActivity(client, {
+      return qualifyLead(client, {
         shopId: ctx.shopId,
-        branchId: updated.branch_id,
-        entityType: 'lead',
-        entityId: updated.id,
-        type: 'qualification',
-        body: `${before.status} → ${nextStatus}${reason ? ` (${reason})` : ''}`,
-        data: { reason },
         actorUserId: ctx.user.id,
+        leadId: req.params.id,
+        scope,
+        input: parsed.value,
       });
-      await recordAudit(
-        {
-          shopId: ctx.shopId,
-          branchId: updated.branch_id,
-          actorUserId: ctx.user.id,
-          entityType: 'lead',
-          entityId: updated.id,
-          action: 'qualify',
-          before: { status: before.status },
-          after: { status: nextStatus },
-          metadata: { reason },
-        },
-        client,
-      );
-      await enqueueOutbox(
-        {
-          shopId: ctx.shopId,
-          eventType: 'lead.qualified',
-          payload: { leadId: updated.id, status: nextStatus },
-          dedupeKey: `lead.qualified:${updated.id}:${nextStatus}`,
-        },
-        client,
-      );
-      return { lead: updated };
     });
 
-    if ('err' in outcome && outcome.err) return res.status(outcome.err.status).json({ error: outcome.err.msg });
-    res.json(serializeLead(outcome.lead));
+    if (!outcome.ok) return res.status(outcome.status).json({ error: outcome.error });
+    res.json(serializeLead(outcome.result.lead));
   } catch (err: any) {
     console.error('[POST /api/crm/leads/:id/qualify] failed:', err?.message || err);
     res.status(400).json({ error: err?.message || 'Failed to qualify lead' });
+  }
+});
+
+/* ------------------------------------------------------------------ */
+/* POST /api/crm/leads/:id/promote   (Phase 3 — lead -> opportunity)   */
+/* ------------------------------------------------------------------ */
+router.post('/:id/promote', ...requireCrmPermission('opportunity', 'create'), async (req: Request, res: Response) => {
+  if (!guardShopScope(req, res)) return;
+  const ctx = req.pgTenant!;
+  const b = req.body ?? {};
+
+  const input: PromoteInput = {};
+  if (typeof b.title === 'string' && b.title.trim().length > 0) input.title = b.title.trim();
+  if (b.notes !== undefined) input.notes = typeof b.notes === 'string' && b.notes.trim() ? b.notes.trim() : null;
+
+  if (b.stage !== undefined && b.stage !== null && b.stage !== '') {
+    if (!OPEN_OPPORTUNITY_STAGES.includes(b.stage)) {
+      return res.status(400).json({ error: `stage must be one of: ${OPEN_OPPORTUNITY_STAGES.join(', ')}` });
+    }
+    input.stage = b.stage;
+  }
+  if (b.amount !== undefined && b.amount !== null && b.amount !== '') {
+    const n = Number(b.amount);
+    if (!Number.isFinite(n) || n < 0) return res.status(400).json({ error: 'amount must be a non-negative number' });
+    input.amount = n;
+  }
+  if (b.probability !== undefined && b.probability !== null && b.probability !== '') {
+    const n = Number(b.probability);
+    if (!Number.isInteger(n) || n < 0 || n > 100) {
+      return res.status(400).json({ error: 'probability must be an integer between 0 and 100' });
+    }
+    input.probability = n;
+  }
+  const rawClose = b.expectedCloseDate ?? b.expected_close_date;
+  if (rawClose !== undefined && rawClose !== null && rawClose !== '') {
+    const s = String(rawClose);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(s) || Number.isNaN(Date.parse(s))) {
+      return res.status(400).json({ error: 'expectedCloseDate must be a YYYY-MM-DD date' });
+    }
+    input.expectedCloseDate = s;
+  }
+
+  try {
+    const outcome = await withTenant(ctx.shopId, async (client) => {
+      const scope = await resolveLeadScope(client, ctx);
+      return promoteLeadToOpportunity(client, {
+        shopId: ctx.shopId,
+        actorUserId: ctx.user.id,
+        leadId: req.params.id,
+        scope,
+        input,
+      });
+    });
+
+    if (!outcome.ok) return res.status(outcome.status).json({ error: outcome.error });
+    res.status(outcome.result.alreadyPromoted ? 200 : 201).json({
+      lead: rowToApi(outcome.result.lead),
+      opportunity: rowToApi(outcome.result.opportunity),
+      alreadyPromoted: outcome.result.alreadyPromoted,
+    });
+  } catch (err: any) {
+    console.error('[POST /api/crm/leads/:id/promote] failed:', err?.message || err);
+    res.status(400).json({ error: err?.message || 'Failed to promote lead' });
   }
 });
 

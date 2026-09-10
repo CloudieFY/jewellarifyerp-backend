@@ -153,6 +153,25 @@ export async function createTestLead(
   return id;
 }
 
+/**
+ * Insert a customer directly. `customers` is NOT under RLS (legacy ERP reads
+ * it on the bare pool), so this goes through the plain pool. `address` is
+ * NOT NULL in the existing schema.
+ */
+export async function createTestCustomer(
+  pg: Pool,
+  shopId: string,
+  opts: { name?: string; phone?: string | null; branchId?: string | null; assignedTo?: string | null } = {},
+): Promise<string> {
+  const id = generateId('cust_crmtest');
+  await pg.query(
+    `INSERT INTO customers (id, shop_id, name, phone, address, status, branch_id, assigned_to)
+     VALUES ($1,$2,$3,$4,'','active',$5,$6)`,
+    [id, shopId, opts.name ?? 'Test Customer', opts.phone ?? null, opts.branchId ?? null, opts.assignedTo ?? null],
+  );
+  return id;
+}
+
 export async function createTestOpportunity(
   pg: Pool,
   shopId: string,

@@ -25,7 +25,8 @@ export type ActivityType =
   | 'stage_change'
   | 'won'
   | 'lost'
-  | 'completion';
+  | 'completion'
+  | 'promotion';
 
 export interface ActivityRow {
   id: string;

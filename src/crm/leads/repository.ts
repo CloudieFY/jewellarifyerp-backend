@@ -25,6 +25,15 @@ export const LEAD_STATUSES = [
 ] as const;
 export type LeadStatus = (typeof LEAD_STATUSES)[number];
 
+/**
+ * Phase 3 structured-qualification outcome. This is a SEPARATE axis from
+ * `status` above — a NULL value means "not yet assessed". `nurture` has no
+ * matching `status` value on purpose (see migration 013): a nurtured lead
+ * keeps whatever open `status` it already had.
+ */
+export const QUALIFICATION_STATUSES = ['qualified', 'nurture', 'disqualified'] as const;
+export type QualificationStatus = (typeof QUALIFICATION_STATUSES)[number];
+
 export interface LeadRow {
   id: string;
   shop_id: string;
@@ -46,6 +55,15 @@ export interface LeadRow {
   created_at: Date;
   updated_at: Date;
   deleted_at: Date | null;
+  // Phase 3 — structured qualification (migration 013)
+  qualification_status: QualificationStatus | null;
+  qualification_score: number | null;
+  qualification_notes: string | null;
+  qualification_data: Record<string, any> | null;
+  qualified_by: string | null;
+  disqualified_at: Date | null;
+  disqualified_reason: string | null;
+  nurture_until: string | null;
 }
 
 /** Server-derived visibility scope for the current user (never from input). */
@@ -183,6 +201,15 @@ export async function updateLead(
     converted_at?: Date | null;
     converted_customer_id?: string | null;
     last_activity_at?: Date | null;
+    // Phase 3 — structured qualification (migration 013)
+    qualification_status?: QualificationStatus | null;
+    qualification_score?: number | null;
+    qualification_notes?: string | null;
+    qualification_data?: Record<string, unknown> | null;
+    qualified_by?: string | null;
+    disqualified_at?: Date | null;
+    disqualified_reason?: string | null;
+    nurture_until?: string | null;
   },
 ): Promise<LeadRow | null> {
   const sets: string[] = [];
@@ -194,9 +221,23 @@ export async function updateLead(
       sets.push(`${col} = $${params.length}`);
     }
   }
-  for (const col of ['qualified_at', 'converted_at', 'converted_customer_id', 'last_activity_at'] as const) {
+  for (const col of [
+    'qualified_at',
+    'converted_at',
+    'converted_customer_id',
+    'last_activity_at',
+    'qualification_status',
+    'qualification_score',
+    'qualification_notes',
+    'qualification_data',
+    'qualified_by',
+    'disqualified_at',
+    'disqualified_reason',
+    'nurture_until',
+  ] as const) {
     if (col in patch && (patch as any)[col] !== undefined) {
-      params.push((patch as any)[col]);
+      const value = (patch as any)[col];
+      params.push(col === 'qualification_data' && value != null ? JSON.stringify(value) : value);
       sets.push(`${col} = $${params.length}`);
     }
   }
@@ -268,4 +309,24 @@ export async function userBelongsToShop(
     [shopId, userId],
   );
   return rows.length > 0;
+}
+
+/**
+ * Phase 3 — dedupe helper for lead -> opportunity promotion: the first
+ * non-deleted opportunity already linked to this lead, or null. `crm_opportunity`
+ * is under the same tenant RLS, so this is shop-safe on the tenant client.
+ */
+export async function findExistingOpportunityForLead(
+  client: PoolClient,
+  shopId: string,
+  leadId: string,
+): Promise<{ id: string } | null> {
+  const { rows } = await client.query(
+    `SELECT id FROM crm_opportunity
+      WHERE shop_id = $1 AND lead_id = $2 AND deleted_at IS NULL
+      ORDER BY created_at ASC
+      LIMIT 1`,
+    [shopId, leadId],
+  );
+  return rows[0] ?? null;
 }

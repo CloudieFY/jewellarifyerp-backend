@@ -49,9 +49,21 @@ const onLeadAssigned: OutboxHandler = async (row: OutboxRow) => {
   );
 };
 
+const QUALIFY_TITLE: Record<string, string> = {
+  qualified: 'Lead qualified',
+  nurture: 'Lead moved to nurture',
+  disqualified: 'Lead disqualified',
+};
+
 const onLeadQualified: OutboxHandler = async (row: OutboxRow) => {
-  const { leadId, status } = row.payload as { leadId?: string; status?: string };
+  // Phase 3 payload: { leadId, outcome }. Phase 1 payload: { leadId, status }.
+  const { leadId, outcome, status } = row.payload as {
+    leadId?: string;
+    outcome?: string;
+    status?: string;
+  };
   if (!leadId) return;
+  const result = outcome ?? status ?? 'qualified';
   await withTenant(row.shop_id, async (client) => {
     const { rows } = await client.query(
       `SELECT assigned_to FROM crm_lead WHERE shop_id = $1 AND id = $2`,
@@ -64,8 +76,29 @@ const onLeadQualified: OutboxHandler = async (row: OutboxRow) => {
       entityType: 'lead',
       entityId: leadId,
       type: 'lead.qualified',
-      title: `Lead ${status ?? 'qualified'}`,
-      data: { status },
+      title: QUALIFY_TITLE[result] ?? `Lead ${result}`,
+      data: { outcome: result },
+    });
+  });
+};
+
+const onLeadPromoted: OutboxHandler = async (row: OutboxRow) => {
+  const { leadId, opportunityId } = row.payload as { leadId?: string; opportunityId?: string };
+  if (!leadId) return;
+  await withTenant(row.shop_id, async (client) => {
+    const { rows } = await client.query(
+      `SELECT assigned_to FROM crm_lead WHERE shop_id = $1 AND id = $2`,
+      [row.shop_id, leadId],
+    );
+    const assignedTo = rows[0]?.assigned_to ?? null;
+    await notifyUserOnce(client, {
+      shopId: row.shop_id,
+      userId: assignedTo,
+      entityType: 'lead',
+      entityId: leadId,
+      type: 'lead.promoted',
+      title: 'Lead promoted to opportunity',
+      data: { opportunityId },
     });
   });
 };
@@ -96,5 +129,6 @@ export function registerLeadOutboxHandlers(): void {
   registerOutboxHandler('lead.created', onLeadCreated);
   registerOutboxHandler('lead.assigned', onLeadAssigned);
   registerOutboxHandler('lead.qualified', onLeadQualified);
+  registerOutboxHandler('lead.promoted', onLeadPromoted);
   registerOutboxHandler('lead.converted', onLeadConverted);
 }
