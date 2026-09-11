@@ -44,11 +44,11 @@ describe.skipIf(!RUN_DB || !HAVE_SECRET)('CRM /tasks routes', () => {
 
     A = await createTestShop(pg, 'taskA');
     B = await createTestShop(pg, 'taskB');
-    ownerA = await createTestUser(pg, A, { role: 'owner' });
+    ownerA = await createTestUser(pg, A, { role: 'owner', crmRole: 'crm_admin' });
     salesA = await createTestUser(pg, A, { role: 'operator', crmRole: 'sales_exec' });
     demoA = await createTestUser(pg, A, { role: 'operator', crmRole: 'demo_exec' });
     accountingA = await createTestUser(pg, A, { role: 'operator', crmRole: 'accounting' });
-    ownerB = await createTestUser(pg, B, { role: 'owner' });
+    ownerB = await createTestUser(pg, B, { role: 'owner', crmRole: 'crm_admin' });
   });
 
   afterAll(async () => {
@@ -136,7 +136,7 @@ describe.skipIf(!RUN_DB || !HAVE_SECRET)('CRM /tasks routes', () => {
 
   it('mine + overdue filters', async () => {
     const s = await createTestShop(pg, 'taskFilter');
-    const owner = await createTestUser(pg, s, { role: 'owner' });
+    const owner = await createTestUser(pg, s, { role: 'owner', crmRole: 'crm_admin' });
     const other = await createTestUser(pg, s, { role: 'operator', crmRole: 'sales_exec' });
     const t = tok(owner, s, 'owner');
 

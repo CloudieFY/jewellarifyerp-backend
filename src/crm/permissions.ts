@@ -142,16 +142,10 @@ export const ROLE_PERMISSIONS: Record<CrmRole, string[]> = {
 /* Resolution                                                          */
 /* ------------------------------------------------------------------ */
 /**
- * Which ERP roles get full CRM access without an explicit crm_role.
- *
- * DECISION (Phase 0): the shop `owner` already administers users, billing and
- * settings, so they implicitly get crm_admin-level CRM access. `operator` and
- * `karigar` get NO CRM access unless a `crm_role` (or explicit permissions)
- * is assigned — least privilege.
+ * CRM is Super-Admin-primary (Phase 0 revision): no ERP role gets CRM access
+ * implicitly. Access is granted only via an explicit `crm_role` or explicit
+ * `permissions` entries on the user row.
  */
-const ERP_ROLE_IMPLICIT_CRM: Record<string, string[]> = {
-  owner: ['*'],
-};
 
 export interface PermissionSubject {
   role?: string | null;
@@ -168,11 +162,7 @@ export function resolveUserPermissions(subject: PermissionSubject | null | undef
   const out = new Set<string>();
   if (!subject) return out;
 
-  const erpRole = (subject.role ?? '').toLowerCase();
   const crmRole = subject.crm_role ?? subject.crmRole ?? '';
-
-  const implicit = ERP_ROLE_IMPLICIT_CRM[erpRole];
-  if (implicit) implicit.forEach((p) => out.add(p));
 
   if (isValidCrmRole(crmRole)) {
     ROLE_PERMISSIONS[crmRole].forEach((p) => out.add(p));

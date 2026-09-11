@@ -47,10 +47,10 @@ describe.skipIf(!RUN_DB || !HAVE_SECRET)('CRM meta routes (dashboard / users / b
 
     A = await createTestShop(pg, 'metaA');
     B = await createTestShop(pg, 'metaB');
-    ownerA = await createTestUser(pg, A, { role: 'owner' });
+    ownerA = await createTestUser(pg, A, { role: 'owner', crmRole: 'crm_admin' });
     accountingA = await createTestUser(pg, A, { role: 'operator', crmRole: 'accounting' });
     demoA = await createTestUser(pg, A, { role: 'operator', crmRole: 'demo_exec' });
-    await createTestUser(pg, B, { role: 'owner' });
+    await createTestUser(pg, B, { role: 'owner', crmRole: 'crm_admin' });
     await createTestBranch(pg, A, 'Main');
 
     // A customer in shop A + a converted lead pointing at it.
@@ -102,7 +102,7 @@ describe.skipIf(!RUN_DB || !HAVE_SECRET)('CRM meta routes (dashboard / users / b
   });
 
   it('GET /dashboard is tenant-scoped: shop B sees zeroes', async () => {
-    const ownerB = await createTestUser(pg, B, { role: 'owner' });
+    const ownerB = await createTestUser(pg, B, { role: 'owner', crmRole: 'crm_admin' });
     const res = await api(srv.base, tok(ownerB, B, 'owner'), 'GET', '/api/crm/dashboard');
     expect(res.status).toBe(200);
     expect(res.body.leads.total).toBe(0);

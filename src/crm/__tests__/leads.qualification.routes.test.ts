@@ -51,11 +51,11 @@ describe.skipIf(!RUN_DB || !HAVE_SECRET)('CRM Phase 3 — lead qualification + p
 
     A = await createTestShop(pg, 'qualA');
     B = await createTestShop(pg, 'qualB');
-    ownerA = await createTestUser(pg, A, { role: 'owner' });
+    ownerA = await createTestUser(pg, A, { role: 'owner', crmRole: 'crm_admin' });
     salesA = await createTestUser(pg, A, { role: 'operator', crmRole: 'sales_exec' });
     supportA = await createTestUser(pg, A, { role: 'operator', crmRole: 'support' });
     dealerA = await createTestUser(pg, A, { role: 'operator', crmRole: 'dealer' });
-    ownerB = await createTestUser(pg, B, { role: 'owner' });
+    ownerB = await createTestUser(pg, B, { role: 'owner', crmRole: 'crm_admin' });
 
     branchA1 = await createTestBranch(pg, A, 'A-One');
     branchA2 = await createTestBranch(pg, A, 'A-Two');

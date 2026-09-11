@@ -30,10 +30,12 @@ export async function startCrmServer(): Promise<CrmTestServer> {
   }
   // Dynamic: defers config/postgres evaluation until after DATABASE_URL is set.
   const { default: crmRouter } = await import('../routes');
+  const { default: crmAdminRouter } = await import('../routes/admin');
 
   const app = express();
   app.use(express.json());
   app.use('/api/crm', crmRouter);
+  app.use('/api/superadmin/crm', crmAdminRouter);
 
   const server: Server = await new Promise((resolve) => {
     const s = app.listen(0, () => resolve(s));

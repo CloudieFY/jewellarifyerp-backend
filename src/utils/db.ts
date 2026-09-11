@@ -89,3 +89,36 @@ export async function withWorkerTx<T>(
     client.release();
   }
 }
+
+/**
+ * Run `callback` inside a transaction flagged as Super Admin cross-shop CRM
+ * read access (migration 014).
+ *
+ * Only `requireSuperAdminPg`-gated routes may call this. It sets
+ * `app.crm_admin_ctx = 'on'`, which the `<table>_superadmin_read` SELECT-only
+ * RLS policies recognise ADDITIONALLY to (never instead of) each table's
+ * existing tenant-isolation policy — so this only ever grants read
+ * visibility across shops, never write access and never for a tenant
+ * request. Single-shop drilldowns and every write still go through
+ * `withTenant(shopId, cb)` above, unchanged.
+ */
+export async function withSuperAdminCrmTx<T>(
+  callback: (client: PoolClient) => Promise<T>
+): Promise<T> {
+  const client = await pgPool.connect();
+
+  try {
+    await client.query('BEGIN');
+    await client.query(`SELECT set_config('app.crm_admin_ctx', 'on', true)`);
+
+    const result = await callback(client);
+
+    await client.query('COMMIT');
+    return result;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}

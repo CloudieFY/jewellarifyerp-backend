@@ -49,11 +49,11 @@ describe.skipIf(!RUN_DB || !HAVE_SECRET)('CRM /opportunities routes', () => {
 
     A = await createTestShop(pg, 'oppA');
     B = await createTestShop(pg, 'oppB');
-    ownerA = await createTestUser(pg, A, { role: 'owner' });
+    ownerA = await createTestUser(pg, A, { role: 'owner', crmRole: 'crm_admin' });
     salesA = await createTestUser(pg, A, { role: 'operator', crmRole: 'sales_exec' });
     supportA = await createTestUser(pg, A, { role: 'operator', crmRole: 'support' });
     dealerA = await createTestUser(pg, A, { role: 'operator', crmRole: 'dealer' });
-    ownerB = await createTestUser(pg, B, { role: 'owner' });
+    ownerB = await createTestUser(pg, B, { role: 'owner', crmRole: 'crm_admin' });
 
     branchA1 = await createTestBranch(pg, A, 'A-One');
     branchA2 = await createTestBranch(pg, A, 'A-Two');
@@ -140,7 +140,7 @@ describe.skipIf(!RUN_DB || !HAVE_SECRET)('CRM /opportunities routes', () => {
 
   it('pagination / filter / sort / search; injection in sort is ignored', async () => {
     const s = await createTestShop(pg, 'oppLq');
-    const u = await createTestUser(pg, s, { role: 'owner' });
+    const u = await createTestUser(pg, s, { role: 'owner', crmRole: 'crm_admin' });
     const t = tok(u, s, 'owner');
     for (let i = 0; i < 7; i++) {
       await createTestOpportunity(pg, s, {
@@ -169,7 +169,7 @@ describe.skipIf(!RUN_DB || !HAVE_SECRET)('CRM /opportunities routes', () => {
 
   it('GET /pipeline returns per-stage count + amount and an open roll-up', async () => {
     const s = await createTestShop(pg, 'oppPipe');
-    const u = await createTestUser(pg, s, { role: 'owner' });
+    const u = await createTestUser(pg, s, { role: 'owner', crmRole: 'crm_admin' });
     const t = tok(u, s, 'owner');
     await createTestOpportunity(pg, s, { stage: 'prospecting', amount: 100 });
     await createTestOpportunity(pg, s, { stage: 'prospecting', amount: 50 });

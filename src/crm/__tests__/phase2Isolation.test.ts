@@ -34,8 +34,8 @@ describe.skipIf(!RUN_DB)('CRM Phase 2 tenant isolation (RLS)', () => {
 
     A = await createTestShop(pg, 'p2A');
     B = await createTestShop(pg, 'p2B');
-    await createTestUser(pg, A, { role: 'owner' });
-    await createTestUser(pg, B, { role: 'owner' });
+    await createTestUser(pg, A, { role: 'owner', crmRole: 'crm_admin' });
+    await createTestUser(pg, B, { role: 'owner', crmRole: 'crm_admin' });
 
     oppA = await createTestOpportunity(pg, A, { title: 'A opp', amount: 10 });
     oppB = await createTestOpportunity(pg, B, { title: 'B opp', amount: 20 });
