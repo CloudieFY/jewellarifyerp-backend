@@ -7,6 +7,7 @@ import { enqueueOutbox } from '../../outbox/repository';
 import { recordActivity } from '../../activity/repository';
 import { branchBelongsToShop, userBelongsToShop } from '../../leads/repository';
 import { leadBelongsToShop, opportunityBelongsToShop, customerBelongsToShop } from '../../opportunities/repository';
+import { demoBelongsToShop } from '../../demos/repository';
 import {
   getTaskById,
   insertTask,
@@ -66,6 +67,7 @@ function pickWritable(body: any): Partial<TaskWritable> {
 async function relatedExists(client: any, shopId: string, type: TaskRelatedType, id: string): Promise<boolean> {
   if (type === 'lead') return leadBelongsToShop(client, shopId, id);
   if (type === 'opportunity') return opportunityBelongsToShop(client, shopId, id);
+  if (type === 'demo') return demoBelongsToShop(client, shopId, id);
   return customerBelongsToShop(client, shopId, id);
 }
 

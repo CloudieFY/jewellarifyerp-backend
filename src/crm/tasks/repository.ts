@@ -20,7 +20,7 @@ export const TASK_OPEN_STATUSES = ['open', 'in_progress', 'cancelled'] as const;
 export const TASK_PRIORITIES = ['low', 'medium', 'high', 'urgent'] as const;
 export type TaskPriority = (typeof TASK_PRIORITIES)[number];
 
-export const TASK_RELATED_TYPES = ['lead', 'opportunity', 'customer'] as const;
+export const TASK_RELATED_TYPES = ['lead', 'opportunity', 'customer', 'demo'] as const;
 export type TaskRelatedType = (typeof TASK_RELATED_TYPES)[number];
 
 export interface TaskRow {

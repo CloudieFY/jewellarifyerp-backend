@@ -1,15 +1,18 @@
 import { Router, Request, Response } from 'express';
-import { withSuperAdminCrmTx } from '../../../utils/db';
+import { withTenant, withSuperAdminCrmTx } from '../../../utils/db';
 import { rowsToApi } from '../../../db/mapping';
 
 /**
  * Super Admin CRM meta endpoints — mounted at /api/superadmin/crm by
  * src/crm/routes/admin/index.ts.
  *
- *   GET /shops      — every shop, for the shop picker / list "Shop" column
- *   GET /dashboard   — cross-shop lead / opportunity / task rollups, grouped
- *                       per shop plus a totals row (mirrors the shape of the
- *                       tenant GET /api/crm/dashboard, extended across shops)
+ *   GET /shops         — every shop, for the shop picker / list "Shop" column
+ *   GET /dashboard      — cross-shop lead / opportunity / task rollups, grouped
+ *                          per shop plus a totals row (mirrors the shape of the
+ *                          tenant GET /api/crm/dashboard, extended across shops)
+ *   GET /users/:shopId  — active users of ONE shop (assignee picker; Super
+ *                          Admin has no implicit shop, so shopId is explicit
+ *                          here, unlike the tenant GET /api/crm/users)
  */
 
 const router = Router();
@@ -26,6 +29,25 @@ router.get('/shops', async (_req: Request, res: Response) => {
   } catch (err: any) {
     console.error('[GET /api/superadmin/crm/shops] failed:', err?.message || err);
     res.status(500).json({ error: 'Failed to list shops' });
+  }
+});
+
+router.get('/users/:shopId', async (req: Request, res: Response) => {
+  try {
+    const rows = await withTenant(req.params.shopId, async (client) => {
+      const { rows } = await client.query(
+        `SELECT id, name, username, role, crm_role
+           FROM users
+          WHERE shop_id = $1 AND is_active = true
+          ORDER BY name ASC`,
+        [req.params.shopId],
+      );
+      return rows;
+    });
+    res.json(rowsToApi(rows));
+  } catch (err: any) {
+    console.error('[GET /api/superadmin/crm/users/:shopId] failed:', err?.message || err);
+    res.status(500).json({ error: 'Failed to list users' });
   }
 });
 

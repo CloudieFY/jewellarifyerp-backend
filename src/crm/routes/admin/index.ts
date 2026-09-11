@@ -4,6 +4,8 @@ import metaRouter from './meta';
 import leadsRouter from './leads';
 import opportunitiesRouter from './opportunities';
 import tasksRouter from './tasks';
+import demosRouter from './demos';
+import quotationsRouter from './quotations';
 
 /**
  * Super Admin CRM API — mounted at `/api/superadmin/crm` by src/serverPg.ts.
@@ -21,6 +23,8 @@ import tasksRouter from './tasks';
  *   /api/superadmin/crm/leads/*            cross-shop list + per-shop CRUD/actions
  *   /api/superadmin/crm/opportunities/*    cross-shop list + per-shop CRUD/actions
  *   /api/superadmin/crm/tasks/*            cross-shop list + per-shop CRUD/actions
+ *   /api/superadmin/crm/demos/*            cross-shop list + per-shop CRUD/actions (Slice 4)
+ *   /api/superadmin/crm/quotations/*       per-opportunity CRUD/actions (Slice 4, foundation scope)
  */
 const crmAdminRouter = Router();
 
@@ -29,6 +33,8 @@ crmAdminRouter.use(requireSuperAdminPg);
 crmAdminRouter.use('/leads', leadsRouter);
 crmAdminRouter.use('/opportunities', opportunitiesRouter);
 crmAdminRouter.use('/tasks', tasksRouter);
+crmAdminRouter.use('/demos', demosRouter);
+crmAdminRouter.use('/quotations', quotationsRouter);
 crmAdminRouter.use('/', metaRouter);
 
 export default crmAdminRouter;

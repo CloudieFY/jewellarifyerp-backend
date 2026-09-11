@@ -10,7 +10,7 @@
 import type { PoolClient } from 'pg';
 import { generateId } from '../../utils/id';
 
-export type ActivityEntityType = 'lead' | 'customer' | 'opportunity' | 'task';
+export type ActivityEntityType = 'lead' | 'customer' | 'opportunity' | 'task' | 'demo' | 'quotation';
 
 export type ActivityType =
   | 'note'

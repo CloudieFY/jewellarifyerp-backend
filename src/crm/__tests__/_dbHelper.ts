@@ -76,10 +76,10 @@ export async function assertCrmSchema(pg: Pool): Promise<void> {
     `SELECT c.relname, c.relrowsecurity, c.relforcerowsecurity
        FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
       WHERE n.nspname = 'public'
-        AND c.relname IN ('crm_lead','crm_activity','crm_opportunity','crm_task','crm_outbox')`,
+        AND c.relname IN ('crm_lead','crm_activity','crm_opportunity','crm_task','crm_outbox','crm_demo','crm_quotation')`,
   );
   const byName = new Map(rows.map((r: any) => [r.relname, r]));
-  for (const t of ['crm_lead', 'crm_activity', 'crm_opportunity', 'crm_task', 'crm_outbox']) {
+  for (const t of ['crm_lead', 'crm_activity', 'crm_opportunity', 'crm_task', 'crm_outbox', 'crm_demo', 'crm_quotation']) {
     const r = byName.get(t);
     if (!r) throw new Error(`assertCrmSchema: table ${t} missing — run "npm run migrate" against the test DB`);
     if (!r.relrowsecurity || !r.relforcerowsecurity) {
@@ -239,6 +239,59 @@ export async function createTestTask(
         opts.relatedType ?? null,
         opts.relatedId ?? null,
       ],
+    ),
+  );
+  return id;
+}
+
+export async function createTestDemo(
+  pg: Pool,
+  shopId: string,
+  opts: {
+    leadId?: string | null;
+    opportunityId?: string | null;
+    customerId?: string | null;
+    assignedTo?: string | null;
+    branchId?: string | null;
+    scheduledAt?: Date;
+    status?: string;
+  } = {},
+): Promise<string> {
+  const id = generateId('crmdemo_test');
+  await asShop(shopId, (c) =>
+    c.query(
+      `INSERT INTO crm_demo
+         (id, shop_id, lead_id, opportunity_id, customer_id, assigned_to, branch_id, scheduled_at, status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,COALESCE($9,'scheduled'))`,
+      [
+        id,
+        shopId,
+        opts.leadId ?? null,
+        opts.opportunityId ?? null,
+        opts.customerId ?? null,
+        opts.assignedTo ?? null,
+        opts.branchId ?? null,
+        opts.scheduledAt ?? new Date(Date.now() + 86400000),
+        opts.status ?? null,
+      ],
+    ),
+  );
+  return id;
+}
+
+export async function createTestQuotation(
+  pg: Pool,
+  shopId: string,
+  opportunityId: string,
+  opts: { title?: string; amount?: number | null; status?: string; customerId?: string | null } = {},
+): Promise<string> {
+  const id = generateId('crmquote_test');
+  await asShop(shopId, (c) =>
+    c.query(
+      `INSERT INTO crm_quotation
+         (id, shop_id, opportunity_id, customer_id, title, amount, status)
+       VALUES ($1,$2,$3,$4,$5,$6,COALESCE($7,'draft'))`,
+      [id, shopId, opportunityId, opts.customerId ?? null, opts.title ?? 'Test Quotation', opts.amount ?? null, opts.status ?? null],
     ),
   );
   return id;

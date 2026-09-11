@@ -4,7 +4,7 @@ import { rowToApi, rowsToApi } from '../../../db/mapping';
 import { parseListQuery, type ListQueryConfig } from '../../db/listQuery';
 import { recordAudit } from '../../audit/recordAudit';
 import { enqueueOutbox } from '../../outbox/repository';
-import { recordActivity } from '../../activity/repository';
+import { recordActivity, listActivity, type ActivityType } from '../../activity/repository';
 import { branchBelongsToShop, userBelongsToShop } from '../../leads/repository';
 import {
   getOpportunityById,
@@ -393,5 +393,54 @@ function closeHandler(kind: 'won' | 'lost') {
 }
 router.post('/:shopId/:id/win', closeHandler('won'));
 router.post('/:shopId/:id/lose', closeHandler('lost'));
+
+/* ------------------------------------------------------------------ */
+/* GET / POST /:shopId/:id/activities                                  */
+/* ------------------------------------------------------------------ */
+router.get('/:shopId/:id/activities', async (req: Request, res: Response) => {
+  const shopId = req.params.shopId;
+  const limit = Math.min(Math.max(1, Number(req.query.limit) || 50), 200);
+  const offset = Math.max(0, Number(req.query.offset) || 0);
+  try {
+    const payload = await withTenant(shopId, async (client) => {
+      const opp = await getOpportunityById(client, shopId, req.params.id);
+      if (!opp) return null;
+      const { rows, total } = await listActivity(client, shopId, 'opportunity', req.params.id, { limit, offset });
+      return { rows, total };
+    });
+    if (!payload) return res.status(404).json({ error: 'Opportunity not found' });
+    res.json({ data: rowsToApi(payload.rows), total: payload.total, limit, offset });
+  } catch (err: any) {
+    console.error('[GET /api/superadmin/crm/opportunities/:shopId/:id/activities] failed:', err?.message || err);
+    res.status(500).json({ error: 'Failed to load activity' });
+  }
+});
+
+router.post('/:shopId/:id/activities', async (req: Request, res: Response) => {
+  const shopId = req.params.shopId;
+  const body = typeof req.body?.body === 'string' ? req.body.body.trim() : '';
+  const allowedTypes: ActivityType[] = ['note', 'call', 'email', 'meeting'];
+  const type: ActivityType = allowedTypes.includes(req.body?.type) ? req.body.type : 'note';
+  if (!body) return res.status(400).json({ error: 'body is required' });
+
+  try {
+    const outcome = await withTenant(shopId, async (client) => {
+      const opp = await getOpportunityById(client, shopId, req.params.id, { forUpdate: true });
+      if (!opp) return { err: { status: 404, msg: 'Opportunity not found' } };
+
+      const activity = await recordActivity(client, {
+        shopId, branchId: opp.branch_id, entityType: 'opportunity', entityId: opp.id, type,
+        body: `${body} (Super Admin)`, data: adminActorMeta(req), actorUserId: null,
+      });
+      await updateOpportunity(client, shopId, opp.id, { last_activity_at: new Date() });
+      return { activity };
+    });
+    if ('err' in outcome && outcome.err) return res.status(outcome.err.status).json({ error: outcome.err.msg });
+    res.status(201).json(rowToApi(outcome.activity));
+  } catch (err: any) {
+    console.error('[POST /api/superadmin/crm/opportunities/:shopId/:id/activities] failed:', err?.message || err);
+    res.status(400).json({ error: err?.message || 'Failed to add activity' });
+  }
+});
 
 export default router;
